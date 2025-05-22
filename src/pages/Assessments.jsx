@@ -643,8 +643,6 @@ const Assessments = () => {
           </motion.div>
         </div>
       )}
-    </div>
-
       {/* Create/Edit Assessment Modal */}
       {(isCreateModalOpen || isEditModalOpen) && currentAssessment && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
@@ -812,6 +810,7 @@ const Assessments = () => {
             </div>
           </motion.div>
         </div>
+    </div>
       )}
   );
 };
