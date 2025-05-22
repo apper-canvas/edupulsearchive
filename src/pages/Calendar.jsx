@@ -46,16 +46,34 @@ const Calendar = () => {
       id: 1,
       title: "Midterm Exam",
       description: "Physics midterm examination",
-      start: new Date(new Date().setHours(10, 0, 0, 0)),
-      end: new Date(new Date().setHours(12, 0, 0, 0)),
+      start: (() => {
+        const date = new Date();
+        date.setHours(10, 0, 0, 0);
+        return date;
+      })(),
+      end: (() => {
+        const date = new Date();
+        date.setHours(12, 0, 0, 0);
+        return date;
+      })(),
       category: "exam"
     },
     {
       id: 2,
       title: "Faculty Meeting",
       description: "Weekly department meeting",
-      start: new Date(new Date().setDate(new Date().getDate() + 1).setHours(14, 0, 0, 0)),
-      end: new Date(new Date().setDate(new Date().getDate() + 1).setHours(15, 30, 0, 0)),
+      start: (() => {
+        const date = new Date();
+        date.setDate(date.getDate() + 1);
+        date.setHours(14, 0, 0, 0);
+        return date;
+      })(),
+      end: (() => {
+        const date = new Date();
+        date.setDate(date.getDate() + 1);
+        date.setHours(15, 30, 0, 0);
+        return date;
+      })(),
       category: "meeting"
     },
     {
@@ -284,8 +302,13 @@ const Calendar = () => {
                 {hour}:00
               </div>
               {days.map((day, dayIndex) => {
-                const hourStart = setHours(setMinutes(new Date(day), 0), hour);
-                const hourEnd = setHours(setMinutes(new Date(day), 59), hour);
+                const hourStart = new Date(day);
+                hourStart.setMinutes(0);
+                hourStart.setHours(hour);
+                
+                const hourEnd = new Date(day);
+                hourEnd.setMinutes(59);
+                hourEnd.setHours(hour);
                 
                 const cellEvents = events.filter(event => {
                   const eventStart = parseISO(event.start.toISOString());
@@ -341,8 +364,13 @@ const Calendar = () => {
         </div>
         <div className="day-grid">
           {hours.map(hour => {
-            const hourStart = setHours(setMinutes(new Date(currentDate), 0), hour);
-            const hourEnd = setHours(setMinutes(new Date(currentDate), 59), hour);
+            const hourStart = new Date(currentDate);
+            hourStart.setMinutes(0);
+            hourStart.setHours(hour);
+            
+            const hourEnd = new Date(currentDate);
+            hourEnd.setMinutes(59);
+            hourEnd.setHours(hour);
             
             const hourEvents = events.filter(event => {
               const eventStart = parseISO(event.start.toISOString());
