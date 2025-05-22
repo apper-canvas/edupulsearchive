@@ -116,3 +116,61 @@ const Courses = () => {
 };
 
 export default Courses;
+        {/* Expanded details */}
+        <AnimatePresence>
+          {showDetails && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mt-4 pt-4 border-t border-surface-200 dark:border-surface-700 overflow-hidden"
+            >
+              {/* Prerequisites */}
+              <div className="mb-4">
+                <h4 className="text-sm font-medium text-surface-800 dark:text-surface-200 mb-1">Prerequisites:</h4>
+                {course.prerequisites.length > 0 ? (
+                  <ul className="list-disc list-inside text-sm text-surface-600 dark:text-surface-400">
+                    {course.prerequisites.map((prereq, index) => (
+                      <li key={index}>{prereq}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-surface-500 dark:text-surface-500">No prerequisites</p>
+                )}
+              </div>
+              
+              {/* Learning Outcomes */}
+              <div className="mb-4">
+                <h4 className="text-sm font-medium text-surface-800 dark:text-surface-200 mb-1">Learning Outcomes:</h4>
+                {course.learningOutcomes.length > 0 ? (
+                  <ul className="list-disc list-inside text-sm text-surface-600 dark:text-surface-400">
+                    {course.learningOutcomes.map((outcome, index) => (
+                      <li key={index}>{outcome}</li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-sm text-surface-500 dark:text-surface-500">No learning outcomes defined</p>
+                )}
+              </div>
+              
+              {/* Schedule */}
+              <div className="mb-4">
+                <h4 className="text-sm font-medium text-surface-800 dark:text-surface-200 mb-1">Schedule:</h4>
+                <p className="text-sm text-surface-600 dark:text-surface-400 mb-1">
+                  {new Date(course.schedule.startDate).toLocaleDateString()} to {new Date(course.schedule.endDate).toLocaleDateString()}
+                </p>
+                <ul className="text-sm text-surface-600 dark:text-surface-400">
+                  {course.schedule.timeSlots.map((slot, index) => (
+                    <li key={index} className="mb-1">
+                      {slot.day.charAt(0).toUpperCase() + slot.day.slice(1)}: {slot.startTime} - {slot.endTime} ({slot.location})
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.div>
+  );
+};
