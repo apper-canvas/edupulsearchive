@@ -586,7 +586,7 @@ const EventForm = ({ event, icons, onSave, onDelete, onCancel, categories }) => 
   });
 
   // Destructure icons
-  const { CalendarIcon, ClockIcon, TagIcon } = icons;
+  const { CalendarIcon, ClockIcon, TagIcon, PlusIcon, EditIcon, TrashIcon } = icons;
   
   const [errors, setErrors] = useState({});
   
