@@ -644,6 +644,175 @@ const Assessments = () => {
         </div>
       )}
     </div>
+
+      {/* Create/Edit Assessment Modal */}
+      {(isCreateModalOpen || isEditModalOpen) && currentAssessment && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white dark:bg-surface-800 rounded-lg shadow-lg w-full max-w-2xl mx-4"
+          >
+            <div className="flex justify-between items-center p-4 border-b border-surface-200 dark:border-surface-700">
+              <h2 className="text-xl font-semibold">
+                {isCreateModalOpen ? 'Create New Assessment' : 'Edit Assessment'}
+              </h2>
+              <button 
+                onClick={() => isCreateModalOpen ? setIsCreateModalOpen(false) : setIsEditModalOpen(false)}
+                className="text-surface-500 hover:text-surface-700 dark:text-surface-400 dark:hover:text-surface-200"
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className="p-4">
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                saveAssessment(currentAssessment, isCreateModalOpen);
+              }}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                  <div className="col-span-2">
+                    <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                      Assessment Title
+                    </label>
+                    <input
+                      type="text"
+                      className="form-input w-full"
+                      value={currentAssessment.title}
+                      onChange={(e) => setCurrentAssessment({...currentAssessment, title: e.target.value})}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                      Type
+                    </label>
+                    <select
+                      className="form-select w-full"
+                      value={currentAssessment.type}
+                      onChange={(e) => setCurrentAssessment({...currentAssessment, type: e.target.value})}
+                    >
+                      {assessmentTypes.filter(type => type !== 'All Types').map(type => (
+                        <option key={type} value={type}>{type}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                      Course
+                    </label>
+                    <select
+                      className="form-select w-full"
+                      value={currentAssessment.course}
+                      onChange={(e) => setCurrentAssessment({...currentAssessment, course: e.target.value})}
+                    >
+                      {courseOptions.filter(course => course !== 'All Courses').map(course => (
+                        <option key={course} value={course}>{course}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                      Due Date
+                    </label>
+                    <input
+                      type="date"
+                      className="form-input w-full"
+                      value={format(currentAssessment.dueDate, 'yyyy-MM-dd')}
+                      onChange={(e) => setCurrentAssessment({
+                        ...currentAssessment, 
+                        dueDate: new Date(e.target.value)
+                      })}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                      Status
+                    </label>
+                    <select
+                      className="form-select w-full"
+                      value={currentAssessment.status}
+                      onChange={(e) => setCurrentAssessment({...currentAssessment, status: e.target.value})}
+                    >
+                      {statusOptions.filter(status => status !== 'All Statuses').map(status => (
+                        <option key={status} value={status}>{status}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                      Total Points
+                    </label>
+                    <input
+                      type="number"
+                      className="form-input w-full"
+                      value={currentAssessment.totalPoints}
+                      onChange={(e) => setCurrentAssessment({...currentAssessment, totalPoints: parseInt(e.target.value, 10)})}
+                      min="0"
+                      required
+                    />
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                      Description
+                    </label>
+                    <textarea
+                      className="form-textarea w-full"
+                      rows="3"
+                      value={currentAssessment.description}
+                      onChange={(e) => setCurrentAssessment({...currentAssessment, description: e.target.value})}
+                    ></textarea>
+                  </div>
+                  {currentAssessment.type === 'Exam' || currentAssessment.type === 'Quiz' ? (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                          Number of Questions
+                        </label>
+                        <input
+                          type="number"
+                          className="form-input w-full"
+                          value={currentAssessment.questions || 0}
+                          onChange={(e) => setCurrentAssessment({...currentAssessment, questions: parseInt(e.target.value, 10)})}
+                          min="0"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                          Duration (minutes)
+                        </label>
+                        <input
+                          type="number"
+                          className="form-input w-full"
+                          value={currentAssessment.duration || 0}
+                          onChange={(e) => setCurrentAssessment({...currentAssessment, duration: parseInt(e.target.value, 10)})}
+                          min="0"
+                        />
+                      </div>
+                    </>
+                  ) : null}
+                </div>
+                <div className="flex justify-end gap-3 pt-4 border-t border-surface-200 dark:border-surface-700">
+                  <button 
+                    type="button"
+                    onClick={() => isCreateModalOpen ? setIsCreateModalOpen(false) : setIsEditModalOpen(false)}
+                    className="btn btn-outline"
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    type="submit"
+                    className="btn btn-primary"
+                  >
+                    <Save size={16} className="mr-1" />
+                    {isCreateModalOpen ? 'Create Assessment' : 'Save Changes'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </motion.div>
+        </div>
+      )}
   );
 };
 
