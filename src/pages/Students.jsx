@@ -39,6 +39,9 @@ const mockStudents = [
       ]},
     ],
     attendance: 92,
+    enrollments: [],
+    enrollmentHistory: [],
+    schedule: {}
   },
   {
     id: 2,
@@ -69,6 +72,9 @@ const mockStudents = [
       ]},
     ],
     attendance: 88,
+    enrollments: [],
+    enrollmentHistory: [],
+    schedule: {}
   },
   {
     id: 3,
@@ -104,6 +110,9 @@ const mockStudents = [
       ]},
     ],
     attendance: 95,
+    enrollments: [],
+    enrollmentHistory: [],
+    schedule: {}
   }
 ];
 
@@ -132,6 +141,294 @@ function Students() {
   const ChevronDownIcon = getIcon('chevron-down');
   const ChevronUpIcon = getIcon('chevron-up');
   const BadgeCheckIcon = getIcon('badge-check');
+  const PlusIcon = getIcon('plus');
+  const MinusIcon = getIcon('minus');
+  const AlertCircleIcon = getIcon('alert-circle');
+  const AlertTriangleIcon = getIcon('alert-triangle');
+  const CalendarIcon = getIcon('calendar');
+
+  // Mock available courses
+  const [availableCourses, setAvailableCourses] = useState([
+    {
+      id: 1,
+      code: "CS101",
+      name: "Introduction to Computer Science",
+      instructor: "Dr. Alan Turing",
+      department: "Computer Science",
+      credits: 3,
+      description: "An introduction to the fundamental concepts of computer science.",
+      prerequisites: [],
+      schedule: {
+        days: ["Monday", "Wednesday"],
+        timeStart: "10:00",
+        timeEnd: "11:30",
+        location: "Science Hall 101"
+      },
+      capacity: 40,
+      enrolled: 32,
+      term: "Fall 2023",
+      program: "Computer Science",
+      yearLevel: [1],
+    },
+    {
+      id: 2,
+      code: "MATH201",
+      name: "Calculus II",
+      instructor: "Dr. Katherine Johnson",
+      department: "Mathematics",
+      credits: 4,
+      description: "A continuation of Calculus I, covering integration techniques, applications of integration, and infinite series.",
+      prerequisites: ["MATH101"],
+      schedule: {
+        days: ["Tuesday", "Thursday"],
+        timeStart: "13:00",
+        timeEnd: "14:30",
+        location: "Math Building 210"
+      },
+      capacity: 30,
+      enrolled: 25,
+      term: "Fall 2023",
+      program: "Mathematics",
+      yearLevel: [2],
+    },
+    {
+      id: 3,
+      code: "CS301",
+      name: "Algorithms",
+      instructor: "Dr. Donald Knuth",
+      department: "Computer Science",
+      credits: 4,
+      description: "Design and analysis of algorithms. Algorithm complexity and efficiency.",
+      prerequisites: ["CS201"],
+      schedule: {
+        days: ["Monday", "Wednesday", "Friday"],
+        timeStart: "14:00",
+        timeEnd: "15:00",
+        location: "Science Hall 203"
+      },
+      capacity: 35,
+      enrolled: 30,
+      term: "Fall 2023",
+      program: "Computer Science",
+      yearLevel: [3],
+    },
+    {
+      id: 4,
+      code: "BUS401",
+      name: "Business Strategy",
+      instructor: "Dr. Peter Drucker",
+      department: "Business Administration",
+      credits: 3,
+      description: "Advanced concepts in business strategy and management.",
+      prerequisites: ["BUS201", "BUS301"],
+      schedule: {
+        days: ["Tuesday", "Thursday"],
+        timeStart: "10:00",
+        timeEnd: "11:30",
+        location: "Business Building 105"
+      },
+      capacity: 40,
+      enrolled: 38,
+      term: "Fall 2023",
+      program: "Business Administration",
+      yearLevel: [4],
+    },
+    {
+      id: 5,
+      code: "EE201",
+      name: "Circuit Analysis",
+      instructor: "Dr. Nikola Tesla",
+      department: "Electrical Engineering",
+      credits: 4,
+      description: "Introduction to circuit analysis techniques and electrical components.",
+      prerequisites: ["PHYS101"],
+      schedule: {
+        days: ["Monday", "Wednesday"],
+        timeStart: "13:00",
+        timeEnd: "14:30",
+        location: "Engineering Hall 202"
+      },
+      capacity: 25,
+      enrolled: 22,
+      term: "Fall 2023",
+      program: "Electrical Engineering",
+      yearLevel: [2],
+    }
+  ]);
+
+  // Check for course conflicts
+  const checkScheduleConflict = (course, existingSchedule) => {
+    // Check if the days overlap
+    const conflictingDays = course.schedule.days.filter(day => 
+      existingSchedule[day] && existingSchedule[day].some(slot => {
+        const courseStart = parseInt(course.schedule.timeStart.replace(':', ''));
+        const courseEnd = parseInt(course.schedule.timeEnd.replace(':', ''));
+        const slotStart = parseInt(slot.timeStart.replace(':', ''));
+        const slotEnd = parseInt(slot.timeEnd.replace(':', ''));
+        
+        // Check if time periods overlap
+        return (courseStart <= slotEnd && courseEnd >= slotStart);
+      })
+    );
+    
+    return conflictingDays.length > 0;
+  };
+
+  // Check prerequisites
+  const checkPrerequisites = (course, student) => {
+    if (!course.prerequisites || course.prerequisites.length === 0) {
+      return true;
+    }
+    
+    // Get all courses the student has taken
+    const completedCourses = student.academicHistory.flatMap(term => 
+      term.courses.map(c => c.code)
+    );
+    
+    // Check if all prerequisites are in the completed courses
+    const missingPrerequisites = course.prerequisites.filter(
+      prereq => !completedCourses.includes(prereq)
+    );
+    
+    return missingPrerequisites.length === 0 ? true : missingPrerequisites;
+  };
+
+  // Enroll in a course
+  const enrollInCourse = (student, course) => {
+    // Create updated student with new enrollment
+    const updatedStudents = students.map(s => {
+      if (s.id === student.id) {
+        // Check if student already enrolled
+        if (s.enrollments.some(enrollment => enrollment.courseId === course.id)) {
+          toast.info("You are already enrolled in this course");
+          return s;
+        }
+        
+        // Check if course is at capacity
+        if (course.enrolled >= course.capacity) {
+          toast.error("This course has reached its enrollment capacity");
+          return s;
+        }
+        
+        // Initialize schedule if it doesn't exist
+        const schedule = {...s.schedule};
+        course.schedule.days.forEach(day => {
+          if (!schedule[day]) {
+            schedule[day] = [];
+          }
+        });
+        
+        // Check for schedule conflicts
+        const hasConflict = checkScheduleConflict(course, schedule);
+        if (hasConflict) {
+          toast.error("This course conflicts with your current schedule");
+          return s;
+        }
+        
+        // Check prerequisites
+        const prereqCheck = checkPrerequisites(course, s);
+        if (prereqCheck !== true) {
+          toast.error(`Missing prerequisites: ${prereqCheck.join(', ')}`);
+          return s;
+        }
+        
+        // Add course to schedule
+        course.schedule.days.forEach(day => {
+          schedule[day] = [
+            ...schedule[day],
+            {
+              courseId: course.id,
+              courseCode: course.code,
+              courseName: course.name,
+              timeStart: course.schedule.timeStart,
+              timeEnd: course.schedule.timeEnd,
+              location: course.schedule.location,
+              color: `hsl(${Math.random() * 360}, 70%, 45%)`
+            }
+          ];
+        });
+        
+        // Add enrollment record
+        const newEnrollment = {
+          id: Date.now(),
+          courseId: course.id,
+          courseCode: course.code,
+          courseName: course.name,
+          instructor: course.instructor,
+          credits: course.credits,
+          term: course.term,
+          enrolledDate: new Date().toISOString(),
+          status: 'enrolled'
+        };
+        
+        toast.success(`Successfully enrolled in ${course.code}: ${course.name}`);
+        
+        return {
+          ...s,
+          schedule,
+          enrollments: [...s.enrollments, newEnrollment],
+          enrollmentHistory: [...s.enrollmentHistory, 
+            {...newEnrollment, action: 'enrolled', date: new Date().toISOString()}
+          ]
+        };
+      }
+      return s;
+    });
+    
+    setStudents(updatedStudents);
+    
+    // Update available courses with increased enrollment
+    setAvailableCourses(availableCourses.map(c => 
+      c.id === course.id ? {...c, enrolled: c.enrolled + 1} : c
+    ));
+  };
+
+  // Drop a course
+  const dropCourse = (student, enrollmentId) => {
+    // Find the enrollment
+    const studentToUpdate = students.find(s => s.id === student.id);
+    const enrollment = studentToUpdate.enrollments.find(e => e.id === enrollmentId);
+    
+    if (!enrollment) {
+      toast.error("Enrollment not found");
+      return;
+    }
+    
+    // Create updated student without this enrollment
+    const updatedStudents = students.map(s => {
+      if (s.id === student.id) {
+        // Remove from enrollments
+        const updatedEnrollments = s.enrollments.filter(e => e.id !== enrollmentId);
+        
+        // Remove from schedule
+        const updatedSchedule = {...s.schedule};
+        Object.keys(updatedSchedule).forEach(day => {
+          updatedSchedule[day] = updatedSchedule[day].filter(
+            slot => slot.courseId !== enrollment.courseId
+          );
+        });
+        
+        toast.success(`Successfully dropped ${enrollment.courseCode}: ${enrollment.courseName}`);
+        
+        return {
+          ...s,
+          schedule: updatedSchedule,
+          enrollments: updatedEnrollments,
+          enrollmentHistory: [...s.enrollmentHistory, 
+            {...enrollment, action: 'dropped', date: new Date().toISOString()}
+          ]
+        };
+      }
+      return s;
+    });
+    
+    setStudents(updatedStudents);
+    
+    // Update available courses with decreased enrollment
+    setAvailableCourses(availableCourses.map(c => 
+      c.id === enrollment.courseId ? {...c, enrolled: c.enrolled - 1} : c
+    ));
+  };
 
   // Filter students based on search and program filter
   const filteredStudents = students.filter(student => {
@@ -290,6 +587,15 @@ function Students() {
                             <span>Performance</span>
                           </div>
                         </button>
+                        <button
+                          className={`px-4 py-2 font-medium ${activeTab === 'enrollment' ? 'text-primary border-b-2 border-primary' : 'text-surface-600 dark:text-surface-400'}`}
+                          onClick={() => setActiveTab('enrollment')}
+                        >
+                          <div className="flex items-center space-x-2">
+                            <CalendarIcon className="w-4 h-4" />
+                            <span>Enrollment</span>
+                          </div>
+                        </button>
                       </div>
 
                       {/* Academic History Tab */}
@@ -411,6 +717,224 @@ function Students() {
                             </p>
                           </div>
                         </div>
+                      
+                      {/* Enrollment Tab */}
+                      {activeTab === 'enrollment' && (
+                        <div className="space-y-6">
+                          <div className="flex flex-col space-y-4">
+                            <h3 className="text-lg font-semibold">Current Enrollments</h3>
+                            
+                            {student.enrollments.length > 0 ? (
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {student.enrollments.map(enrollment => (
+                                  <div key={enrollment.id} className="course-card course-card-enrolled">
+                                    <div className="flex justify-between items-start">
+                                      <div>
+                                        <h4 className="font-medium text-surface-900 dark:text-white">
+                                          {enrollment.courseCode}: {enrollment.courseName}
+                                        </h4>
+                                        <p className="text-sm text-surface-600 dark:text-surface-400">
+                                          {enrollment.instructor} • {enrollment.credits} credits
+                                        </p>
+                                        <div className="mt-2 flex items-center">
+                                          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                                            Enrolled
+                                          </span>
+                                        </div>
+                                      </div>
+                                      <button
+                                        onClick={() => {
+                                          if (confirm(`Are you sure you want to drop ${enrollment.courseCode}?`)) {
+                                            dropCourse(student, enrollment.id);
+                                          }
+                                        }}
+                                        className="enrollment-action-btn bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-900/50"
+                                      >
+                                        <MinusIcon className="w-3 h-3" />
+                                        Drop
+                                      </button>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <div className="bg-surface-100 dark:bg-surface-800 rounded-lg p-4 text-center">
+                                <p className="text-surface-600 dark:text-surface-400">
+                                  Not enrolled in any courses for the current term.
+                                </p>
+                              </div>
+                            )}
+                            
+                            <h3 className="text-lg font-semibold mt-6">Schedule</h3>
+                            {Object.keys(student.schedule).length > 0 ? (
+                              <div className="schedule-grid">
+                                <div className="time-slot"></div>
+                                <div className="day-header">Monday</div>
+                                <div className="day-header">Tuesday</div>
+                                <div className="day-header">Wednesday</div>
+                                <div className="day-header">Thursday</div>
+                                <div className="day-header">Friday</div>
+                                
+                                {/* Time slots: 8AM to 5PM */}
+                                {Array.from({length: 10}, (_, i) => {
+                                  const hour = i + 8;
+                                  return (
+                                    <React.Fragment key={hour}>
+                                      <div className="time-slot">{hour}:00</div>
+                                      {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"].map(day => {
+                                        const courses = student.schedule[day] || [];
+                                        const courseInThisSlot = courses.find(c => {
+                                          const startHour = parseInt(c.timeStart.split(':')[0]);
+                                          const endHour = parseInt(c.timeEnd.split(':')[0]);
+                                          return startHour <= hour && endHour > hour;
+                                        });
+                                        
+                                        if (courseInThisSlot) {
+                                          return (
+                                            <div
+                                              key={day}
+                                              className="course-slot"
+                                              style={{ backgroundColor: courseInThisSlot.color }}
+                                              title={`${courseInThisSlot.courseCode}: ${courseInThisSlot.courseName}\n${courseInThisSlot.timeStart} - ${courseInThisSlot.timeEnd}\n${courseInThisSlot.location}`}
+                                            >
+                                              {courseInThisSlot.courseCode}
+                                            </div>
+                                          );
+                                        }
+                                        return <div key={day} className="bg-white dark:bg-surface-700 rounded-lg"></div>;
+                                      })}
+                                    </React.Fragment>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <div className="bg-surface-100 dark:bg-surface-800 rounded-lg p-4 text-center">
+                                <p className="text-surface-600 dark:text-surface-400">
+                                  No courses scheduled for the current term.
+                                </p>
+                              </div>
+                            )}
+                            
+                            <h3 className="text-lg font-semibold mt-6">Available Courses</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              {availableCourses
+                                .filter(course => 
+                                  course.program === student.program && 
+                                  course.yearLevel.includes(student.yearLevel)
+                                )
+                                .map(course => {
+                                  // Check if already enrolled
+                                  const isEnrolled = student.enrollments.some(
+                                    e => e.courseId === course.id
+                                  );
+                                  
+                                  // Check prerequisites
+                                  const prereqCheck = checkPrerequisites(course, student);
+                                  const hasMissingPrereqs = prereqCheck !== true;
+                                  
+                                  // Check capacity
+                                  const isAtCapacity = course.enrolled >= course.capacity;
+                                  
+                                  // Check for schedule conflicts
+                                  const hasConflict = student.schedule && 
+                                    Object.keys(student.schedule).length > 0 && 
+                                    checkScheduleConflict(course, student.schedule);
+                                  
+                                  // Determine card class based on status
+                                  let cardClass = "course-card ";
+                                  if (isEnrolled) {
+                                    cardClass += "course-card-enrolled";
+                                  } else if (hasConflict) {
+                                    cardClass += "course-card-conflict";
+                                  } else if (hasMissingPrereqs) {
+                                    cardClass += "course-card-prerequisites";
+                                  } else if (!isAtCapacity) {
+                                    cardClass += "course-card-available";
+                                  }
+                                  
+                                  return (
+                                    <div key={course.id} className={cardClass}>
+                                      <div className="flex justify-between">
+                                        <div>
+                                          <h4 className="font-medium text-surface-900 dark:text-white">
+                                            {course.code}: {course.name}
+                                          </h4>
+                                          <p className="text-sm text-surface-600 dark:text-surface-400">
+                                            {course.instructor} • {course.credits} credits
+                                          </p>
+                                          <p className="text-xs text-surface-500 dark:text-surface-400 mt-1">
+                                            {course.schedule.days.join(', ')} • {course.schedule.timeStart} - {course.schedule.timeEnd} • {course.schedule.location}
+                                          </p>
+                                          <div className="mt-2 flex items-center gap-2 text-xs">
+                                            <span className={`${course.enrolled >= course.capacity ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+                                              {course.enrolled}/{course.capacity} enrolled
+                                            </span>
+                                            {hasConflict && <span className="flex items-center text-red-600 dark:text-red-400"><AlertCircleIcon className="w-3 h-3 mr-1" /> Schedule Conflict</span>}
+                                            {hasMissingPrereqs && <span className="flex items-center text-amber-600 dark:text-amber-400"><AlertTriangleIcon className="w-3 h-3 mr-1" /> Prerequisites</span>}
+                                          </div>
+                                        </div>
+                                        {!isEnrolled && (
+                                          <button
+                                            onClick={() => enrollInCourse(student, course)}
+                                            disabled={isEnrolled || isAtCapacity || hasConflict || hasMissingPrereqs}
+                                            className={`enrollment-action-btn ${!isAtCapacity && !hasConflict && !hasMissingPrereqs ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/50' : 'bg-surface-200 text-surface-500 dark:bg-surface-700 dark:text-surface-400 cursor-not-allowed'}`}
+                                          >
+                                            <PlusIcon className="w-3 h-3" />
+                                            Enroll
+                                          </button>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                            </div>
+                            
+                            <h3 className="text-lg font-semibold mt-6">Enrollment History</h3>
+                            {student.enrollmentHistory.length > 0 ? (
+                              <div className="bg-surface-100 dark:bg-surface-800 rounded-lg overflow-hidden">
+                                <table className="w-full">
+                                  <thead>
+                                    <tr className="bg-surface-200 dark:bg-surface-700">
+                                      <th className="py-2 px-4 text-left text-sm">Date</th>
+                                      <th className="py-2 px-4 text-left text-sm">Course</th>
+                                      <th className="py-2 px-4 text-left text-sm">Action</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {student.enrollmentHistory
+                                      .sort((a, b) => new Date(b.date) - new Date(a.date))
+                                      .map((record, index) => (
+                                        <tr key={index} className="border-t border-surface-200 dark:border-surface-700">
+                                          <td className="py-2 px-4 text-sm">
+                                            {new Date(record.date).toLocaleDateString()}
+                                          </td>
+                                          <td className="py-2 px-4 text-sm">
+                                            {record.courseCode}: {record.courseName}
+                                          </td>
+                                          <td className="py-2 px-4 text-sm">
+                                            <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${
+                                              record.action === 'enrolled' 
+                                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' 
+                                                : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
+                                            }`}>
+                                              {record.action === 'enrolled' ? 'Enrolled' : 'Dropped'}
+                                            </span>
+                                          </td>
+                                        </tr>
+                                      ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            ) : (
+                              <div className="bg-surface-100 dark:bg-surface-800 rounded-lg p-4 text-center">
+                                <p className="text-surface-600 dark:text-surface-400">
+                                  No enrollment history available.
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
                       )}
                     </div>
                   </motion.div>
