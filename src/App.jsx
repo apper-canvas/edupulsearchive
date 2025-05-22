@@ -9,6 +9,7 @@ import Home from './pages/Home';
 import NotFound from './pages/NotFound';
 import Courses from './pages/Courses';
 import Students from './pages/Students';
+import Calendar from './pages/Calendar';
 import Assessments from './pages/Assessments';
 
 function App() {
@@ -176,6 +177,7 @@ function App() {
             <Route path="/courses" element={<Courses />} />
             <Route path="/students" element={<Students />} />
             <Route path="/assessments" element={<Assessments />} />
+            <Route path="/calendar" element={<Calendar />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
