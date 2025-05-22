@@ -717,7 +717,7 @@ function Students() {
                             </p>
                           </div>
                         </div>
-                      
+                      )}
                       {/* Enrollment Tab */}
                       {activeTab === 'enrollment' && (
                         <div className="space-y-6">
