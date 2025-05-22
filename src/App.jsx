@@ -8,6 +8,7 @@ import { getIcon } from './utils/iconUtils';
 import Home from './pages/Home';
 import NotFound from './pages/NotFound';
 import Courses from './pages/Courses';
+import Students from './pages/Students';
 
 function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -172,6 +173,7 @@ function App() {
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/courses" element={<Courses />} />
+            <Route path="/students" element={<Students />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>

@@ -99,4 +99,20 @@
     content: "*";
     @apply text-red-500 ml-0.5;
   }
+  
+  /* Student profile styling */
+  .academic-term {
+    @apply relative;
+  }
+  
+  .academic-term::before {
+    content: "";
+    @apply absolute left-0 top-10 bottom-0 w-1 bg-primary/20 rounded-full;
+  }
+  
+  /* Transcript styling */
+  .transcript-term {
+    @apply bg-white dark:bg-surface-800 rounded-lg shadow-sm border border-surface-200 
+    dark:border-surface-700 p-4;
+  }
 }
