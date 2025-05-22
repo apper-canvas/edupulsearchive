@@ -80,8 +80,18 @@ const Calendar = () => {
       id: 3,
       title: "Student Advising",
       description: "Office hours for student advising",
-      start: new Date(new Date().setDate(new Date().getDate() + 2).setHours(13, 0, 0, 0)),
-      end: new Date(new Date().setDate(new Date().getDate() + 2).setHours(16, 0, 0, 0)),
+      start: (() => {
+        const date = new Date();
+        date.setDate(date.getDate() + 2);
+        date.setHours(13, 0, 0, 0);
+        return date;
+      })(),
+      end: (() => {
+        const date = new Date();
+        date.setDate(date.getDate() + 2);
+        date.setHours(16, 0, 0, 0);
+        return date;
+      })(),
       category: "appointment"
     }
   ]);
