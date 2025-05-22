@@ -9,6 +9,7 @@ import Home from './pages/Home';
 import NotFound from './pages/NotFound';
 import Courses from './pages/Courses';
 import Students from './pages/Students';
+import Assessments from './pages/Assessments';
 
 function App() {
   const [isDarkMode, setIsDarkMode] = useState(false);
@@ -174,6 +175,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/courses" element={<Courses />} />
             <Route path="/students" element={<Students />} />
+            <Route path="/assessments" element={<Assessments />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </main>
