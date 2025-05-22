@@ -20,3 +20,10 @@
                  ))
                ) : (
                  <tr>
+                   <td colSpan="6" className="px-4 py-8 text-center text-surface-500 dark:text-surface-400">
+                     <div className="flex flex-col items-center justify-center gap-2">
+                       <span className="text-lg font-medium">No assessments found</span>
+                       <p>Try adjusting your filters or create a new assessment</p>
+                     </div>
+                   </td>
+                 </tr>
