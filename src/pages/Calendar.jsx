@@ -526,7 +526,10 @@ const Calendar = () => {
                 icons={{
                   CalendarIcon,
                   ClockIcon,
-                  TagIcon }}
+                  TagIcon,
+                  PlusIcon,
+                  EditIcon,
+                  TrashIcon }}
                 onSave={handleSaveEvent}
                 onDelete={openDeleteModal}
                 onCancel={closeEventModal}
