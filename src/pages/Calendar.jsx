@@ -523,6 +523,10 @@ const Calendar = () => {
               
               <EventForm
                 event={currentEvent}
+                icons={{
+                  CalendarIcon,
+                  ClockIcon,
+                  TagIcon }}
                 onSave={handleSaveEvent}
                 onDelete={openDeleteModal}
                 onCancel={closeEventModal}
@@ -568,7 +572,7 @@ const Calendar = () => {
 };
 
 // Event Form Component
-const EventForm = ({ event, onSave, onDelete, onCancel, categories }) => {
+const EventForm = ({ event, icons, onSave, onDelete, onCancel, categories }) => {
   const [formData, setFormData] = useState({
     id: event?.id || null,
     title: event?.title || '',
@@ -577,6 +581,9 @@ const EventForm = ({ event, onSave, onDelete, onCancel, categories }) => {
     end: event?.end || new Date(new Date().setHours(new Date().getHours() + 1)),
     category: event?.category || 'other'
   });
+
+  // Destructure icons
+  const { CalendarIcon, ClockIcon, TagIcon } = icons;
   
   const [errors, setErrors] = useState({});
   
