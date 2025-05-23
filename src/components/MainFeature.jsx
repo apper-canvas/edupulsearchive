@@ -124,13 +124,11 @@ const MainFeature = () => {
   // Filter courses based on search and filters
   const filteredCourses = courses.filter(course => {
     const matchesDepartment = departmentFilter === "all" || course.department?.toLowerCase() === departmentFilter?.toLowerCase();
-                         course.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         course.instructor.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesDepartment = departmentFilter === "all" || course.department === departmentFilter;
-    
+    const matchesSearch = course.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          course.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          course.instructor?.toLowerCase().includes(searchTerm.toLowerCase());
+
     const matchesStatus = statusFilter === "all" || course.status === statusFilter;
-    
     return matchesSearch && matchesDepartment && matchesStatus;
   });
   
@@ -459,14 +457,12 @@ const MainFeature = () => {
                     type="button"
                     onClick={() => setIsFormOpen(false)}
                     className="btn btn-outline"
-                  >
-                    Cancel
-                  </button>
-                    onClick={() => setIsFormOpen(false)} 
-                    type="submit"
+                  >Cancel</button>
+                  <button
+                    type="submit" 
                     disabled={isLoading}
                     className="btn btn-primary"
-                  >
+                  >Add Course
                   </button> 
                   </button>
                 </div>
