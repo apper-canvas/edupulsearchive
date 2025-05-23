@@ -464,7 +464,6 @@ const MainFeature = () => {
                     className="btn btn-primary"
                   >Add Course
                   </button> 
-                  </button>
                 </div>
               </form>
             </motion.div>
