@@ -874,7 +874,6 @@ const Assessments = () => {
           </motion.div>
         </div>
       )}
-      )}
     </div>
   );
 };
