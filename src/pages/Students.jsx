@@ -124,6 +124,21 @@ function Students() {
   const [activeTab, setActiveTab] = useState('academic');
   const [showTranscript, setShowTranscript] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
+  const [showNewStudentModal, setShowNewStudentModal] = useState(false);
+  const [newStudentForm, setNewStudentForm] = useState({
+    name: '',
+    email: '',
+    program: '',
+    yearLevel: 1,
+    status: 'Active',
+    photo: ''
+  });
+
+  // Generate unique student ID
+  const generateStudentId = () => {
+    const maxId = Math.max(...students.map(s => parseInt(s.studentId.replace('ST', ''))));
+    return `ST${String(maxId + 1).padStart(8, '0')}`;
+  };
 
   // Icons
   const SearchIcon = getIcon('search');
@@ -142,6 +157,7 @@ function Students() {
   const ChevronUpIcon = getIcon('chevron-up');
   const BadgeCheckIcon = getIcon('badge-check');
   const PlusIcon = getIcon('plus');
+  const UserPlusIcon = getIcon('user-plus');
   const MinusIcon = getIcon('minus');
   const AlertCircleIcon = getIcon('alert-circle');
   const AlertTriangleIcon = getIcon('alert-triangle');
@@ -476,6 +492,64 @@ function Students() {
     }, 1000);
   };
 
+  // Handle new student form submission
+  const handleNewStudentSubmit = (e) => {
+    e.preventDefault();
+    
+    // Validation
+    if (!newStudentForm.name.trim()) {
+      toast.error('Student name is required');
+      return;
+    }
+    
+    if (!newStudentForm.email.trim()) {
+      toast.error('Email is required');
+      return;
+    }
+    
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newStudentForm.email)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
+    
+    if (!newStudentForm.program.trim()) {
+      toast.error('Program is required');
+      return;
+    }
+    
+    // Check if email already exists
+    if (students.some(s => s.email.toLowerCase() === newStudentForm.email.toLowerCase())) {
+      toast.error('A student with this email already exists');
+      return;
+    }
+    
+    // Create new student
+    const newStudent = {
+      id: Math.max(...students.map(s => s.id)) + 1,
+      name: newStudentForm.name.trim(),
+      studentId: generateStudentId(),
+      email: newStudentForm.email.trim(),
+      program: newStudentForm.program.trim(),
+      yearLevel: parseInt(newStudentForm.yearLevel),
+      status: newStudentForm.status,
+      photo: newStudentForm.photo.trim() || `https://randomuser.me/api/portraits/${Math.random() > 0.5 ? 'men' : 'women'}/${Math.floor(Math.random() * 99)}.jpg`,
+      gpa: 0.0,
+      credits: 0,
+      academicHistory: [],
+      attendance: 100,
+      enrollments: [],
+      enrollmentHistory: [],
+      schedule: {}
+    };
+    
+    setStudents([...students, newStudent]);
+    setShowNewStudentModal(false);
+    resetNewStudentForm();
+    toast.success(`Student ${newStudent.name} has been added successfully!`);
+  };
+
+  const resetNewStudentForm = () => {
+    setNewStudentForm({
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
@@ -484,6 +558,13 @@ function Students() {
         </h1>
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative">
+
+  const updateNewStudentForm = (field, value) => {
+    setNewStudentForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
             <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-surface-400" />
             <input
               type="text"
@@ -503,6 +584,13 @@ function Students() {
               <option key={program} value={program}>{program}</option>
             ))}
           </select>
+          <button 
+            className="btn btn-primary"
+            onClick={() => setShowNewStudentModal(true)}
+          >
+            <UserPlusIcon className="w-4 h-4 mr-2" />
+            New Student
+          </button>
         </div>
       </div>
 
@@ -1037,6 +1125,142 @@ function Students() {
                 Download Transcript
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* New Student Modal */}
+      {showNewStudentModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white dark:bg-surface-800 rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-4 border-b border-surface-200 dark:border-surface-700">
+              <h3 className="text-xl font-bold">Add New Student</h3>
+              <button 
+                className="p-2 rounded-lg hover:bg-surface-100 dark:hover:bg-surface-700"
+                onClick={() => {
+                  setShowNewStudentModal(false);
+                  resetNewStudentForm();
+                }}
+              >
+                <XIcon className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleNewStudentSubmit} className="p-6">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                    Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={newStudentForm.name}
+                    onChange={(e) => updateNewStudentForm('name', e.target.value)}
+                    className="form-input"
+                    placeholder="Enter student's full name"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                    Email Address *
+                  </label>
+                  <input
+                    type="email"
+                    value={newStudentForm.email}
+                    onChange={(e) => updateNewStudentForm('email', e.target.value)}
+                    className="form-input"
+                    placeholder="student@example.com"
+                    required
+                  />
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                    Program *
+                  </label>
+                  <select
+                    value={newStudentForm.program}
+                    onChange={(e) => updateNewStudentForm('program', e.target.value)}
+                    className="form-input"
+                    required
+                  >
+                    <option value="">Select Program</option>
+                    <option value="Computer Science">Computer Science</option>
+                    <option value="Electrical Engineering">Electrical Engineering</option>
+                    <option value="Business Administration">Business Administration</option>
+                    <option value="Mathematics">Mathematics</option>
+                    <option value="Psychology">Psychology</option>
+                    <option value="Biology">Biology</option>
+                    <option value="Chemistry">Chemistry</option>
+                    <option value="Physics">Physics</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                    Year Level *
+                  </label>
+                  <select
+                    value={newStudentForm.yearLevel}
+                    onChange={(e) => updateNewStudentForm('yearLevel', e.target.value)}
+                    className="form-input"
+                    required
+                  >
+                    <option value={1}>1st Year</option>
+                    <option value={2}>2nd Year</option>
+                    <option value={3}>3rd Year</option>
+                    <option value={4}>4th Year</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                    Status
+                  </label>
+                  <select
+                    value={newStudentForm.status}
+                    onChange={(e) => updateNewStudentForm('status', e.target.value)}
+                    className="form-input"
+                  >
+                    <option value="Active">Active</option>
+                    <option value="Inactive">Inactive</option>
+                    <option value="Graduated">Graduated</option>
+                    <option value="Suspended">Suspended</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                    Photo URL (Optional)
+                  </label>
+                  <input
+                    type="url"
+                    value={newStudentForm.photo}
+                    onChange={(e) => updateNewStudentForm('photo', e.target.value)}
+                    className="form-input"
+                    placeholder="https://example.com/photo.jpg"
+                  />
+                  <p className="text-xs text-surface-500 dark:text-surface-400 mt-1">
+                    Leave empty for random avatar
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex justify-end gap-3 mt-6">
+                <button type="button" className="btn btn-outline" onClick={() => {
+                  setShowNewStudentModal(false);
+                  resetNewStudentForm();
+                }}>
+                  Cancel
+                </button>
+                <button type="submit" className="btn btn-primary">
+                  <UserPlusIcon className="w-4 h-4 mr-2" />
+                  Add Student
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
