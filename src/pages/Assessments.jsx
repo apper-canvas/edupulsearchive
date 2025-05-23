@@ -20,69 +20,14 @@ import {
   Save
 } from 'lucide-react';
 
-// Sample assessment data
-const assessmentsData = [
-  {
-    id: 1,
-    title: 'Midterm Examination',
-    type: 'Exam',
-    course: 'Introduction to Programming',
-    dueDate: new Date(2023, 9, 15),
-    status: 'Upcoming',
-    totalPoints: 100,
-    description: 'Comprehensive examination covering modules 1-5 including practical coding exercises.',
-    questions: 20,
-    duration: 120
-  },
-  {
-    id: 2,
-    title: 'Database Design Project',
-    type: 'Project',
-    course: 'Database Systems',
-    dueDate: new Date(2023, 9, 20),
-    status: 'Published',
-    totalPoints: 150,
-    description: 'Design and implement a normalized database for a business case scenario.',
-    questions: null,
-    duration: null
-  },
-  {
-    id: 3,
-    title: 'Weekly Quiz 5',
-    type: 'Quiz',
-    course: 'Web Development',
-    dueDate: new Date(2023, 9, 5),
-    status: 'Completed',
-    totalPoints: 20,
-    description: 'Quick assessment on HTML, CSS and basic JavaScript concepts.',
-    questions: 10,
-    duration: 30
-  },
-  {
-    id: 4,
-    title: 'Final Project Presentation',
-    type: 'Presentation',
-    course: 'Software Engineering',
-    dueDate: new Date(2023, 11, 10),
-    status: 'Upcoming',
-    totalPoints: 200,
-    description: 'Team presentation of the final software project including demo and code review.',
-    questions: null,
-    duration: 45
-  },
-  {
-    id: 5,
-    title: 'Research Paper',
-    type: 'Assignment',
-    course: 'Computer Networks',
-    dueDate: new Date(2023, 10, 28),
-    status: 'Draft',
-    totalPoints: 100,
-    description: 'Research paper on emerging networking technologies and their applications.',
-    questions: null,
-    duration: null
-  }
-];
+// Import assessment service for database operations
+import { 
+  fetchAssessments, 
+  getAssessmentById, 
+  createAssessment, 
+  updateAssessment, 
+  deleteAssessment 
+} from '../services/assessmentService';
 
 const assessmentTypes = ['All Types', 'Exam', 'Quiz', 'Project', 'Assignment', 'Presentation'];
 const statusOptions = ['All Statuses', 'Draft', 'Published', 'Upcoming', 'In Progress', 'Completed'];
@@ -100,6 +45,8 @@ const Assessments = () => {
   const [assessments, setAssessments] = useState([]);
   const [filteredAssessments, setFilteredAssessments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('All Types');
   const [selectedStatus, setSelectedStatus] = useState('All Statuses');
@@ -113,20 +60,78 @@ const Assessments = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
+  // Parse details JSON from database record
+  const parseAssessmentDetails = (detailsStr) => {
+    try {
+      return JSON.parse(detailsStr);
+    } catch (error) {
+      console.error("Error parsing assessment details:", error);
+      return {};
+    }
+  };
+
+  // Convert database record to assessment object
+  const mapRecordToAssessment = (record) => {
+    const details = parseAssessmentDetails(record.details);
+    return {
+      id: record.Id,
+      title: record.Name,
+      type: details.assessmentType || 'Exam',
+      course: details.course || 'Not specified',
+      dueDate: record.timestamp ? new Date(record.timestamp) : new Date(),
+      status: record.action || 'Draft',
+      totalPoints: details.totalPoints || 0,
+      description: details.description || '',
+      questions: details.questions || null,
+      duration: details.duration || null
+    };
+  };
+
   // Format date function
   const formatDate = (date) => {
-    return format(date, 'MMM dd, yyyy');
+    if (!date) return 'Not set';
+    return format(new Date(date), 'MMM dd, yyyy');
   };
 
   // Load assessments
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setAssessments(assessmentsData);
-      setFilteredAssessments(assessmentsData);
-      setLoading(false);
-    }, 800);
+    loadAssessments();
   }, []);
+
+  // Function to load assessments from database
+  const loadAssessments = async () => {
+    setLoading(true);
+    try {
+      // Create filter object from selected filters
+      const filters = {
+        searchTerm: searchTerm,
+        type: selectedType !== 'All Types' ? selectedType : null,
+        status: selectedStatus !== 'All Statuses' ? selectedStatus : null,
+        course: selectedCourse !== 'All Courses' ? selectedCourse : null
+      };
+
+      // Fetch assessments from database
+      const response = await fetchAssessments(filters);
+      
+      if (response && response.data) {
+        // Map database records to assessment objects
+        const mappedAssessments = response.data.map(mapRecordToAssessment);
+        setAssessments(mappedAssessments);
+        setFilteredAssessments(mappedAssessments);
+      } else {
+        // Handle empty response
+        setAssessments([]);
+        setFilteredAssessments([]);
+      }
+    } catch (error) {
+      console.error("Failed to load assessments:", error);
+      toast.error("Failed to load assessments. Please try again.");
+      setAssessments([]);
+      setFilteredAssessments([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Filter assessments
   useEffect(() => {
@@ -175,32 +180,82 @@ const Assessments = () => {
   };
 
   // Confirm delete assessment
-  const confirmDeleteAssessment = () => {
-    const updatedAssessments = assessments.filter(a => a.id !== currentAssessment.id);
-    setAssessments(updatedAssessments);
-    toast.success(`Assessment "${currentAssessment.title}" has been deleted.`);
-    setIsDeleteModalOpen(false);
+  const confirmDeleteAssessment = async () => {
+    if (!currentAssessment || !currentAssessment.id) {
+      toast.error("Cannot delete assessment: No ID provided");
+      return;
+    }
+
+    setDeleting(true);
+    try {
+      // Delete assessment from database
+      await deleteAssessment(currentAssessment.id);
+      
+      // Update local state
+      const updatedAssessments = assessments.filter(a => a.id !== currentAssessment.id);
+      setAssessments(updatedAssessments);
+      setFilteredAssessments(updatedAssessments);
+      
+      toast.success(`Assessment "${currentAssessment.title}" has been deleted.`);
+      setIsDeleteModalOpen(false);
+    } catch (error) {
+      console.error("Failed to delete assessment:", error);
+      toast.error("Failed to delete assessment. Please try again.");
+    } finally {
+      setDeleting(false);
+    }
   };
 
   // Save assessment (edit or create)
-  const saveAssessment = (assessment, isNew = false) => {
-    if (isNew) {
-      // Add new assessment
-      const newAssessment = {
-        ...assessment,
-        id: assessments.length + 1
-      };
-      setAssessments([...assessments, newAssessment]);
-      toast.success(`New assessment "${assessment.title}" has been created.`);
-      setIsCreateModalOpen(false);
-    } else {
-      // Update existing assessment
-      const updatedAssessments = assessments.map(a => 
-        a.id === assessment.id ? assessment : a
-      );
-      setAssessments(updatedAssessments);
-      toast.success(`Assessment "${assessment.title}" has been updated.`);
-      setIsEditModalOpen(false);
+  const saveAssessment = async (assessment, isNew = false) => {
+    setSubmitting(true);
+    try {
+      let response;
+      
+      if (isNew) {
+        // Create new assessment in database
+        response = await createAssessment(assessment);
+        
+        if (response && response.results && response.results[0] && response.results[0].success) {
+          // Get the created assessment data with ID
+          const createdRecord = response.results[0].data;
+          const newAssessment = mapRecordToAssessment(createdRecord);
+          
+          // Update local state
+          setAssessments([...assessments, newAssessment]);
+          setFilteredAssessments([...filteredAssessments, newAssessment]);
+          
+          toast.success(`New assessment "${assessment.title}" has been created.`);
+          setIsCreateModalOpen(false);
+        } else {
+          throw new Error("Failed to create assessment");
+        }
+      } else {
+        // Update existing assessment in database
+        response = await updateAssessment(assessment);
+        
+        if (response && response.results && response.results[0] && response.results[0].success) {
+          // Update local state
+          const updatedAssessment = mapRecordToAssessment({
+            ...response.results[0].data,
+            Id: assessment.id
+          });
+          
+          const updatedAssessments = assessments.map(a => 
+            a.id === assessment.id ? updatedAssessment : a
+          );
+          setAssessments(updatedAssessments);
+          setFilteredAssessments(updatedAssessments);
+          
+          toast.success(`Assessment "${assessment.title}" has been updated.`);
+          setIsEditModalOpen(false);
+        }
+      }
+    } catch (error) {
+      console.error("Failed to save assessment:", error);
+      toast.error(`Failed to ${isNew ? 'create' : 'update'} assessment. Please try again.`);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -635,7 +690,11 @@ const Assessments = () => {
                 <button 
                   onClick={confirmDeleteAssessment}
                   className="btn flex-1 bg-red-600 hover:bg-red-700 text-white focus:ring-red-500"
+                  disabled={deleting}
                 >
+                  {deleting && (
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                  )}
                   Delete
                 </button>
               </div>
@@ -801,7 +860,11 @@ const Assessments = () => {
                   <button 
                     type="submit"
                     className="btn btn-primary"
+                    disabled={submitting}
                   >
+                    {submitting && (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                    )}
                     <Save size={16} className="mr-1" />
                     {isCreateModalOpen ? 'Create Assessment' : 'Save Changes'}
                   </button>
