@@ -349,9 +349,8 @@ function App() {
         progressClassName="!bg-primary"
       />
     </div>
+    </AuthContext.Provider>
   );
 }
 
 export default App;
-      </div>
-    </AuthContext.Provider>
