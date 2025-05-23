@@ -569,7 +569,7 @@ function Students() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
-        <h1 className="text-2xl font-bold text-surface-900 dark:text-white mb-4 md:mb-0">
+        <h1 className="text-3xl font-bold text-surface-900 dark:text-white mb-4 md:mb-0 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
           Student Management
         </h1>
         <div className="flex flex-col sm:flex-row gap-3">
@@ -581,7 +581,7 @@ function Students() {
               placeholder="Search students..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="form-input pl-10"
+              className="form-input pl-10 pr-4"
             />
           </div>
           <select 
@@ -595,7 +595,7 @@ function Students() {
             ))}
           </select>
           <button 
-            className="btn btn-primary"
+            className="btn btn-primary shadow-lg hover:shadow-xl"
             onClick={() => setShowNewStudentModal(true)}
           >
             <UserPlusIcon className="w-4 h-4 mr-2" />
@@ -608,23 +608,23 @@ function Students() {
       <div className="grid grid-cols-1 gap-6">
         {filteredStudents.length > 0 ? (
           filteredStudents.map(student => (
-            <div key={student.id} className="card">
+            <div key={student.id} className="student-card">
               <div 
-                className="p-4 cursor-pointer"
+                className="p-6 cursor-pointer"
                 onClick={() => toggleStudentExpand(student.id)}
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-6">
                     <img 
                       src={student.photo} 
                       alt={student.name} 
-                      className="w-12 h-12 rounded-full object-cover border-2 border-surface-200 dark:border-surface-700"
+                      className="student-photo"
                     />
                     <div>
-                      <h3 className="font-semibold text-lg text-surface-900 dark:text-white">
+                      <h3 className="font-bold text-xl text-surface-900 dark:text-white">
                         {student.name}
                       </h3>
-                      <div className="flex items-center text-sm text-surface-500 dark:text-surface-400 space-x-3">
+                      <div className="flex items-center text-sm text-surface-600 dark:text-surface-400 space-x-3 mt-1">
                         <span>{student.studentId}</span>
                         <span>•</span>
                         <span>{student.program}</span>
@@ -634,21 +634,21 @@ function Students() {
                     </div>
                   </div>
                   <div className="flex items-center space-x-4">
-                    <div className="hidden md:flex items-center space-x-1">
+                    <div className="hidden md:flex items-center space-x-2 bg-primary/10 dark:bg-primary/20 px-3 py-2 rounded-lg">
                       <GraduationCapIcon className="w-4 h-4 text-primary" />
-                      <span className="font-medium">GPA: {student.gpa}</span>
+                      <span className="font-semibold text-surface-900 dark:text-white">GPA: {student.gpa}</span>
                     </div>
-                    <div className="hidden md:flex items-center space-x-1">
+                    <div className="hidden md:flex items-center space-x-2 bg-secondary/10 dark:bg-secondary/20 px-3 py-2 rounded-lg">
                       <BadgeCheckIcon className="w-4 h-4 text-secondary" />
-                      <span>{student.credits} Credits</span>
+                      <span className="font-semibold text-surface-900 dark:text-white">{student.credits} Credits</span>
                     </div>
-                    <div className="bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-400 px-2 py-1 rounded text-xs font-medium">
+                    <div className="status-badge bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400">
                       {student.status}
                     </div>
                     {expandedStudentId === student.id ? (
-                      <ChevronUpIcon className="w-5 h-5 text-surface-500" />
+                      <ChevronUpIcon className="w-6 h-6 text-surface-500 transition-transform duration-200" />
                     ) : (
-                      <ChevronDownIcon className="w-5 h-5 text-surface-500" />
+                      <ChevronDownIcon className="w-6 h-6 text-surface-500 transition-transform duration-200" />
                     )}
                   </div>
                 </div>
@@ -664,11 +664,11 @@ function Students() {
                     transition={{ duration: 0.3 }}
                     className="overflow-hidden border-t border-surface-200 dark:border-surface-700"
                   >
-                    <div className="p-4">
+                    <div className="p-6 bg-gradient-to-r from-surface-50 to-white dark:from-surface-800 dark:to-surface-750">
                       {/* Tabs */}
-                      <div className="flex border-b border-surface-200 dark:border-surface-700 mb-4">
+                      <div className="flex border-b border-surface-200 dark:border-surface-700 mb-6 bg-white dark:bg-surface-700 rounded-t-lg">
                         <button
-                          className={`px-4 py-2 font-medium ${activeTab === 'academic' ? 'text-primary border-b-2 border-primary' : 'text-surface-600 dark:text-surface-400'}`}
+                          className={`tab-button ${activeTab === 'academic' ? 'active' : ''}`}
                           onClick={() => setActiveTab('academic')}
                         >
                           <div className="flex items-center space-x-2">
@@ -677,7 +677,7 @@ function Students() {
                           </div>
                         </button>
                         <button
-                          className={`px-4 py-2 font-medium ${activeTab === 'performance' ? 'text-primary border-b-2 border-primary' : 'text-surface-600 dark:text-surface-400'}`}
+                          className={`tab-button ${activeTab === 'performance' ? 'active' : ''}`}
                           onClick={() => setActiveTab('performance')}
                         >
                           <div className="flex items-center space-x-2">
@@ -686,7 +686,7 @@ function Students() {
                           </div>
                         </button>
                         <button
-                          className={`px-4 py-2 font-medium ${activeTab === 'enrollment' ? 'text-primary border-b-2 border-primary' : 'text-surface-600 dark:text-surface-400'}`}
+                          className={`tab-button ${activeTab === 'enrollment' ? 'active' : ''}`}
                           onClick={() => setActiveTab('enrollment')}
                         >
                           <div className="flex items-center space-x-2">
@@ -701,21 +701,21 @@ function Students() {
                         <div className="space-y-6">
                           <div className="flex flex-wrap gap-3">
                             <button 
-                              className="btn btn-primary"
+                              className="btn btn-primary shadow-md hover:shadow-lg"
                               onClick={() => viewTranscript(student)}
                             >
                               <FileTextIcon className="w-4 h-4 mr-2" />
                               View Transcript
                             </button>
                             <button 
-                              className="btn btn-outline"
+                              className="btn btn-outline shadow-md hover:shadow-lg"
                               onClick={() => downloadTranscript(student)}
                             >
                               <DownloadIcon className="w-4 h-4 mr-2" />
                               Download Transcript
                             </button>
                             <button 
-                              className="btn btn-outline"
+                              className="btn btn-outline shadow-md hover:shadow-lg"
                               onClick={() => notifyStudent(student)}
                             >
                               <MailIcon className="w-4 h-4 mr-2" />
@@ -726,29 +726,29 @@ function Students() {
                           <div className="space-y-4">
                             {student.academicHistory.map((term, index) => (
                               <div key={index} className="academic-term">
-                                <h4 className="font-medium text-lg text-surface-800 dark:text-surface-200 mb-2">{term.semester}</h4>
-                                <div className="bg-surface-100 dark:bg-surface-800 rounded-lg p-4">
-                                  <table className="w-full">
+                                <h4 className="font-bold text-xl text-surface-800 dark:text-surface-200 mb-4 pl-4">{term.semester}</h4>
+                                <div className="bg-white dark:bg-surface-700 rounded-xl p-6 shadow-sm border border-surface-200 dark:border-surface-600">
+                                  <table className="w-full border-collapse">
                                     <thead>
-                                      <tr className="text-left text-sm text-surface-500 dark:text-surface-400">
-                                        <th className="pb-2">Course</th>
-                                        <th className="pb-2">Name</th>
-                                        <th className="pb-2">Credits</th>
-                                        <th className="pb-2">Grade</th>
+                                      <tr className="text-left text-sm text-surface-600 dark:text-surface-400 border-b border-surface-200 dark:border-surface-600">
+                                        <th className="pb-3 font-semibold">Course</th>
+                                        <th className="pb-3 font-semibold">Name</th>
+                                        <th className="pb-3 font-semibold">Credits</th>
+                                        <th className="pb-3 font-semibold">Grade</th>
                                       </tr>
                                     </thead>
-                                    <tbody className="divide-y divide-surface-200 dark:divide-surface-700">
+                                    <tbody className="divide-y divide-surface-100 dark:divide-surface-600">
                                       {term.courses.map((course, courseIndex) => (
-                                        <tr key={courseIndex}>
-                                          <td className="py-2 font-medium">{course.code}</td>
-                                          <td className="py-2">{course.name}</td>
-                                          <td className="py-2">{course.credits}</td>
-                                          <td className="py-2">
-                                            <span className={`inline-block px-2 py-1 rounded-md text-xs font-medium ${
-                                              course.grade.startsWith('A') ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400' :
-                                              course.grade.startsWith('B') ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/20 dark:text-blue-400' :
-                                              course.grade.startsWith('C') ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400' :
-                                              'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+                                        <tr key={courseIndex} className="hover:bg-surface-50 dark:hover:bg-surface-600 transition-colors duration-150">
+                                          <td className="py-4 font-semibold text-primary">{course.code}</td>
+                                          <td className="py-4 text-surface-900 dark:text-surface-100">{course.name}</td>
+                                          <td className="py-4 text-surface-700 dark:text-surface-300">{course.credits}</td>
+                                          <td className="py-4">
+                                            <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold ${
+                                              course.grade.startsWith('A') ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400' :
+                                              course.grade.startsWith('B') ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' :
+                                              course.grade.startsWith('C') ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400' :
+                                              'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
                                             }`}>
                                               {course.grade}
                                             </span>
@@ -767,7 +767,7 @@ function Students() {
                       {/* Performance Tab */}
                       {activeTab === 'performance' && (
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                          <div className="card p-4">
+                          <div className="card p-6">
                             <h4 className="font-medium text-surface-800 dark:text-surface-200 mb-2">Academic Standing</h4>
                             <div className="flex items-center space-x-2">
                               <AwardIcon className="w-5 h-5 text-primary" />
@@ -782,7 +782,7 @@ function Students() {
                             </p>
                           </div>
                           
-                          <div className="card p-4">
+                          <div className="card p-6">
                             <h4 className="font-medium text-surface-800 dark:text-surface-200 mb-2">Attendance</h4>
                             <div className="flex items-center space-x-2">
                               <ClockIcon className="w-5 h-5 text-secondary" />
@@ -796,7 +796,7 @@ function Students() {
                             </div>
                           </div>
                           
-                          <div className="card p-4 md:col-span-2">
+                          <div className="card p-6 md:col-span-2">
                             <h4 className="font-medium text-surface-800 dark:text-surface-200 mb-2">Degree Progress</h4>
                             <div className="flex items-center space-x-2 mb-2">
                               <ClipboardListIcon className="w-5 h-5 text-accent" />
@@ -1041,7 +1041,7 @@ function Students() {
           ))
         ) : (
           <div className="card p-6 text-center">
-            <div className="text-surface-500 dark:text-surface-400 text-lg">
+            <div className="text-surface-500 dark:text-surface-400 text-lg font-medium">
               No students found matching your search criteria.
             </div>
           </div>
@@ -1051,7 +1051,7 @@ function Students() {
       {/* Transcript Modal */}
       {showTranscript && selectedStudent && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-surface-800 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-surface-800 rounded-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
             <div className="flex items-center justify-between p-4 border-b border-surface-200 dark:border-surface-700">
               <h3 className="text-xl font-bold">Official Transcript</h3>
               <button 
@@ -1141,7 +1141,7 @@ function Students() {
       {/* New Student Modal */}
       {showNewStudentModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-surface-800 rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-surface-800 rounded-xl max-w-md w-full max-h-[90vh] overflow-y-auto shadow-2xl">
             <div className="flex items-center justify-between p-4 border-b border-surface-200 dark:border-surface-700">
               <h3 className="text-xl font-bold">Add New Student</h3>
               <button 
@@ -1156,7 +1156,7 @@ function Students() {
             </div>
             
             <form onSubmit={handleNewStudentSubmit} className="p-6">
-              <div className="space-y-4">
+              <div className="space-y-5">
                 <div>
                   <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
                     Full Name *
@@ -1258,13 +1258,13 @@ function Students() {
               </div>
               
               <div className="flex justify-end gap-3 mt-6">
-                <button type="button" className="btn btn-outline" onClick={() => {
+                <button type="button" className="btn btn-outline shadow-md hover:shadow-lg" onClick={() => {
                   setShowNewStudentModal(false);
                   resetNewStudentForm();
                 }}>
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary">
+                <button type="submit" className="btn btn-primary shadow-md hover:shadow-lg">
                   <UserPlusIcon className="w-4 h-4 mr-2" />
                   Add Student
                 </button>

@@ -16,7 +16,7 @@ const StatsCard = ({ title, value, icon: Icon, iconColor = 'blue', trend = 0, de
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay }}
-      className={`card p-5 ${className}`}
+      className={`card p-6 ${className}`}
     >
       <div className="flex items-start justify-between">
         <div>
@@ -27,7 +27,7 @@ const StatsCard = ({ title, value, icon: Icon, iconColor = 'blue', trend = 0, de
           <Icon className="h-5 w-5" />
         </div>
       </div>
-      <div className="mt-2 text-xs font-medium flex items-center">
+      <div className="mt-3 text-xs font-medium flex items-center">
         {trend > 0 ? (
           <span className="text-green-500 mr-1">↑ {trend}%</span>
         ) : trend < 0 ? (

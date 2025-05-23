@@ -51,7 +51,7 @@ function App() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Header */}
-      <header className="sticky top-0 bg-white dark:bg-surface-800 border-b border-surface-200 dark:border-surface-700 z-10">
+      <header className="sticky top-0 bg-white/95 dark:bg-surface-800/95 backdrop-blur-sm border-b border-surface-200 dark:border-surface-700 z-10 shadow-sm">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -85,7 +85,7 @@ function App() {
       {/* Main Content */}
       <div className="flex flex-1">
         {/* Sidebar - Desktop */}
-        <aside className="hidden md:flex flex-col w-64 border-r border-surface-200 dark:border-surface-700 bg-white dark:bg-surface-800 py-6">
+        <aside className="hidden md:flex flex-col w-64 border-r border-surface-200 dark:border-surface-700 bg-white/95 dark:bg-surface-800/95 backdrop-blur-sm py-6">
           <div className="px-4 mb-6">
             <h2 className="text-sm font-semibold text-surface-500 dark:text-surface-400 uppercase tracking-wider">
               Menu
@@ -171,7 +171,7 @@ function App() {
         </motion.aside>
         
         {/* Main Content */}
-        <main className="flex-1 overflow-x-hidden bg-surface-50 dark:bg-surface-900">
+        <main className="flex-1 overflow-x-hidden bg-gradient-to-br from-surface-50 to-surface-100 dark:from-surface-900 dark:to-surface-800">
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/courses" element={<Courses />} />

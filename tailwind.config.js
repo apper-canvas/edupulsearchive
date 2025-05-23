@@ -29,7 +29,32 @@ export default {
           700: '#334155',
           800: '#1e293b',
           900: '#0f172a'   // Darkest
+    },
+    success: {
+      DEFAULT: '#10B981',
+      light: '#34D399',
+      dark: '#059669'
         }
+  },
+  animation: {
+    'fade-in': 'fadeIn 0.5s ease-in-out',
+    'slide-up': 'slideUp 0.3s ease-out',
+    'bounce-in': 'bounceIn 0.6s ease-out'
+  },
+  keyframes: {
+    fadeIn: {
+      '0%': { opacity: '0' },
+      '100%': { opacity: '1' }
+    },
+    slideUp: {
+      '0%': { transform: 'translateY(20px)', opacity: '0' },
+      '100%': { transform: 'translateY(0)', opacity: '1' }
+    },
+    bounceIn: {
+      '0%': { transform: 'scale(0.3)', opacity: '0' },
+      '50%': { transform: 'scale(1.05)' },
+      '70%': { transform: 'scale(0.9)' },
+      '100%': { transform: 'scale(1)', opacity: '1' }
       },
       fontFamily: {
         sans: ['Inter', 'ui-sans-serif', 'system-ui'],
@@ -37,9 +62,12 @@ export default {
       },
       boxShadow: {
         'soft': '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)',
-        'card': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1)',
+    'card': '0 4px 20px -2px rgba(0, 0, 0, 0.1), 0 2px 8px -2px rgba(0, 0, 0, 0.06)',
+    'card-hover': '0 8px 30px -2px rgba(0, 0, 0, 0.15), 0 4px 12px -2px rgba(0, 0, 0, 0.1)',
         'neu-light': '5px 5px 15px #d1d9e6, -5px -5px 15px #ffffff',
-        'neu-dark': '5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(255, 255, 255, 0.05)'
+    'neu-dark': '5px 5px 15px rgba(0, 0, 0, 0.3), -5px -5px 15px rgba(255, 255, 255, 0.05)',
+    'glow': '0 0 20px rgba(79, 70, 229, 0.3)',
+    'inner': 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)'
       },
       borderRadius: {
         'xl': '0.75rem',
