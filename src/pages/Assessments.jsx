@@ -70,20 +70,19 @@ const Assessments = () => {
     }
   };
 
-  // Convert database record to assessment object
+  // Map database record to assessment object
   const mapRecordToAssessment = (record) => {
-    const details = parseAssessmentDetails(record.details);
     return {
       id: record.Id,
-      title: record.Name,
-      type: details.assessmentType || 'Exam',
-      course: details.course || 'Not specified',
-      dueDate: record.timestamp ? new Date(record.timestamp) : new Date(),
-      status: record.action || 'Draft',
-      totalPoints: details.totalPoints || 0,
-      description: details.description || '',
-      questions: details.questions || null,
-      duration: details.duration || null
+      title: record.title || record.Name,
+      type: record.type || 'Exam',
+      course: record.course || 'Not specified',
+      dueDate: record.dueDate ? new Date(record.dueDate) : new Date(),
+      status: record.Tags || 'Draft',
+      totalPoints: record.pointsPossible || 0,
+      description: record.description || '',
+      questions: null, // No longer stored in details
+      duration: null // No longer stored in details
     };
   };
 
@@ -216,8 +215,10 @@ const Assessments = () => {
         // Create new assessment in database
         response = await createAssessment(assessment);
         
-        if (response && response.results && response.results[0] && response.results[0].success) {
+        if (response && response.success && response.results && response.results[0] && response.results[0].success) {
           // Get the created assessment data with ID
+          // Note: We need to fetch the assessment again to get all the fields
+          // since createRecord may not return all fields
           const createdRecord = response.results[0].data;
           const newAssessment = mapRecordToAssessment(createdRecord);
           
@@ -234,7 +235,7 @@ const Assessments = () => {
         // Update existing assessment in database
         response = await updateAssessment(assessment);
         
-        if (response && response.results && response.results[0] && response.results[0].success) {
+        if (response && response.success && response.results && response.results[0] && response.results[0].success) {
           // Update local state
           const updatedAssessment = mapRecordToAssessment({
             ...response.results[0].data,
@@ -259,13 +260,13 @@ const Assessments = () => {
     }
   };
 
-  // Create a new assessment
+  // Initialize a new assessment
   const handleCreateAssessment = () => {
     setCurrentAssessment({
       id: null,
       title: '',
       type: 'Quiz',
-      course: courseOptions[1],
+      course: courseOptions[1], // Default to first actual course
       dueDate: new Date(),
       status: 'Draft',
       totalPoints: 0,
@@ -624,7 +625,7 @@ const Assessments = () => {
                   <p className="text-sm text-surface-500 dark:text-surface-400">Total Points</p>
                   <p className="font-medium">{currentAssessment.totalPoints}</p>
                 </div>
-                {currentAssessment.questions && (
+                {currentAssessment.questions !== null && (
                   <div>
                     <p className="text-sm text-surface-500 dark:text-surface-400">Questions</p>
                     <p className="font-medium">{currentAssessment.questions}</p>
@@ -762,7 +763,7 @@ const Assessments = () => {
                         className="form-input w-full py-2"
                         value={currentAssessment.course}
                         onChange={(e) => setCurrentAssessment({...currentAssessment, course: e.target.value})}
-                      >
+                        >
                         {courseOptions.filter(course => course !== 'All Courses').map(course => (
                           <option key={course} value={course}>{course}</option>
                         ))}

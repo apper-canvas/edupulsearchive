@@ -1,7 +1,7 @@
 /**
  * Assessment Service
  * Handles all assessment-related data operations
- * Uses activity_log table since it's the most appropriate for assessments
+ * Uses the dedicated assessment table for proper data structure
  */
 
 // Format date to ISO string
@@ -27,15 +27,14 @@ export const fetchAssessments = async (filters = {}, pagination = { limit: 20, o
     // Build where conditions based on filters
     const whereConditions = [];
     
-    // Always filter for assessment type entries
-    whereConditions.push({
-      fieldName: "type",
-      operator: "ExactMatch",
-      values: ["assessment"]
-    });
-
     // Add title/name search filter if provided
     if (filters.searchTerm) {
+      whereConditions.push({
+        fieldName: "title",
+        operator: "Contains",
+        values: [filters.searchTerm]
+      });
+      // Also search in Name field
       whereConditions.push({
         fieldName: "Name",
         operator: "Contains",
@@ -43,34 +42,43 @@ export const fetchAssessments = async (filters = {}, pagination = { limit: 20, o
       });
     }
 
-    // Add course filter if provided
-    if (filters.course && filters.course !== 'All Courses') {
+    // Add type filter if provided
+    if (filters.type && filters.type !== 'All Types') {
       whereConditions.push({
-        fieldName: "details",
-        operator: "Contains",
-        values: [filters.course]
+        fieldName: "type",
+        operator: "ExactMatch",
+        values: [filters.type]
       });
     }
 
     // Add status filter if provided
     if (filters.status && filters.status !== 'All Statuses') {
       whereConditions.push({
-        fieldName: "action",
-        operator: "ExactMatch",
+        fieldName: "Tags",
+        operator: "Contains",
         values: [filters.status]
+      });
+    }
+    
+    // Add course filter if provided
+    if (filters.course && filters.course !== 'All Courses') {
+      whereConditions.push({
+        fieldName: "course",
+        operator: "ExactMatch",
+        values: [filters.course]
       });
     }
 
     const params = {
       fields: [
-        "Id", "Name", "type", "action", "details", "timestamp", "icon", "user", "Tags"
+        "Id", "Name", "Tags", "title", "course", "type", "dueDate", "pointsPossible", "description"
       ],
       where: whereConditions,
       pagingInfo: pagination,
-      orderBy: [{ fieldName: "timestamp", SortType: "DESC" }]
+      orderBy: [{ fieldName: "dueDate", SortType: "ASC" }]
     };
 
-    const response = await apperClient.fetchRecords("activity_log", params);
+    const response = await apperClient.fetchRecords("assessment", params);
     return response;
   } catch (error) {
     console.error("Error fetching assessments:", error);
@@ -92,10 +100,10 @@ export const getAssessmentById = async (id) => {
     });
 
     const params = {
-      fields: ["Id", "Name", "type", "action", "details", "timestamp", "icon", "user", "Tags"]
+      fields: ["Id", "Name", "Tags", "title", "course", "type", "dueDate", "pointsPossible", "description"]
     };
 
-    const response = await apperClient.getRecordById("activity_log", id, params);
+    const response = await apperClient.getRecordById("assessment", id, params);
     return response;
   } catch (error) {
     console.error(`Error fetching assessment with ID ${id}:`, error);
@@ -119,25 +127,17 @@ export const createAssessment = async (assessment) => {
     // Prepare assessment data for API (only include Updateable fields)
     const assessmentData = {
       Name: assessment.title,
-      type: "assessment",
-      action: assessment.status,
-      details: JSON.stringify({
-        course: assessment.course,
-        totalPoints: assessment.totalPoints,
-        description: assessment.description,
-        questions: assessment.questions,
-        duration: assessment.duration,
-        assessmentType: assessment.type
-      }),
-      timestamp: formatDateForApi(assessment.dueDate),
-      icon: "clipboard-check"
+      Tags: assessment.status,
+      title: assessment.title,
+      type: assessment.type,
+      pointsPossible: assessment.totalPoints,
+      description: assessment.description,
+      dueDate: formatDateForApi(assessment.dueDate)
+    };
+    const params = { records: [assessmentData] };
     };
 
-    const params = {
-      records: [assessmentData]
-    };
-
-    const response = await apperClient.createRecord("activity_log", params);
+    const response = await apperClient.createRecord("assessment", params);
     return response;
   } catch (error) {
     console.error("Error creating assessment:", error);
@@ -162,24 +162,17 @@ export const updateAssessment = async (assessment) => {
     const assessmentData = {
       Id: assessment.id,
       Name: assessment.title,
-      action: assessment.status,
-      details: JSON.stringify({
-        course: assessment.course,
-        totalPoints: assessment.totalPoints,
-        description: assessment.description,
-        questions: assessment.questions,
-        duration: assessment.duration,
-        assessmentType: assessment.type
-      }),
-      timestamp: formatDateForApi(assessment.dueDate),
-      icon: "clipboard-check"
+      Tags: assessment.status,
+      title: assessment.title,
+      type: assessment.type,
+      pointsPossible: assessment.totalPoints,
+      description: assessment.description,
+      dueDate: formatDateForApi(assessment.dueDate)
+    };
+    const params = { records: [assessmentData] };
     };
 
-    const params = {
-      records: [assessmentData]
-    };
-
-    const response = await apperClient.updateRecord("activity_log", params);
+    const response = await apperClient.updateRecord("assessment", params);
     return response;
   } catch (error) {
     console.error("Error updating assessment:", error);
@@ -204,7 +197,7 @@ export const deleteAssessment = async (id) => {
       RecordIds: [id]
     };
 
-    const response = await apperClient.deleteRecord("activity_log", params);
+    const response = await apperClient.deleteRecord("assessment", params);
     return response;
   } catch (error) {
     console.error(`Error deleting assessment with ID ${id}:`, error);
