@@ -13,7 +13,6 @@ const Courses = () => {
     averageEnrollment: 0
   });
   const [isLoading, setIsLoading] = useState(false);
-  });
 
   // Icons
   const BookOpenIcon = getIcon('book-open');
