@@ -133,11 +133,15 @@ function Students() {
 
   // Fetch students from database
   const fetchStudents = async () => {
-    setIsLoading(true);
+    if (!isLoading) {
+      setIsLoading(true);
+    }
     try {
       const studentsData = await getStudents();
       
-      if (studentsData && studentsData.length > 0) {
+      console.log("Fetched students:", studentsData);
+      
+      if (studentsData?.length > 0) {
         // For now, merge mock academic data with real student data
         // In a real app, we would fetch this data from the database
         const enhancedStudents = studentsData.map(student => {
@@ -145,10 +149,11 @@ function Students() {
           return {
             ...student,
             id: student.Id,
-            academicHistory: mockData?.academicHistory || [],
-            attendance: student.attendance || mockData?.attendance || 90,
-            enrollments: mockData?.enrollments || [],
-            enrollmentHistory: mockData?.enrollmentHistory || [],
+            name: student.Name, // Map Name field from database to name property
+            academicHistory: mockData?.academicHistory || [], // Keep mock academic history
+            attendance: student.attendance ?? mockData?.attendance ?? 90, // Use database value or fallback
+            enrollments: mockData?.enrollments || [], // Keep mock enrollments
+            enrollmentHistory: mockData?.enrollmentHistory || [], // Keep mock enrollment history
             schedule: mockData?.schedule || {}
           };
         });
@@ -161,7 +166,7 @@ function Students() {
     } catch (error) {
       console.error("Error fetching students:", error);
       toast.error("Failed to load students");
-      setStudents(mockStudents); // Fallback to mock data on error
+      setStudents(mockStudents); // Fallback to mock data on error for demo purposes
     } finally {
       setIsLoading(false);
     }
@@ -570,41 +575,56 @@ function Students() {
     
     const studentData = {
       Name: newStudentForm.name.trim(),
-      studentId: generateStudentId(),
+      studentId: generateStudentId(), // Generate a unique student ID
       email: newStudentForm.email.trim(),
       program: newStudentForm.program.trim(),
       yearLevel: parseInt(newStudentForm.yearLevel),
       status: newStudentForm.status,
       photo: newStudentForm.photo.trim() || `https://randomuser.me/api/portraits/${Math.random() > 0.5 ? 'men' : 'women'}/${Math.floor(Math.random() * 99)}.jpg`,
-      gpa: 0,
-      credits: 0,
-      attendance: 100
+      gpa: 0.0, // Initialize GPA as 0.0 (correct decimal format for database)
+      credits: 0, // Initialize credits as 0
+      attendance: 100 // Initialize attendance as 100%
     };
     
     try {
       setIsLoading(true);
+      toast.info("Creating new student...");
+      
       const newStudent = await createStudent(studentData);
       
-      if (newStudent) {
-        // Log activity for student creation
-        await logActivity({
-          type: "student",
-          action: "Student Created",
-          details: `New student ${studentData.Name} added to the system`,
-          icon: "user-plus",
-          user: "Admin User",
-          timestamp: new Date().toISOString()
+      console.log("Created student:", newStudent);
+      
+      if (newStudent?.Id) {
+        try {
+          // Log activity for student creation
+          await logActivity({
+            Name: `Student Created: ${studentData.Name}`,
+            type: "student",
+            action: "Student Created",
+            details: `New student ${studentData.Name} added to the system`,
+            icon: "user-plus",
+            user: "Admin User",
+            timestamp: new Date().toISOString()
+          });
+        } catch (logError) {
+          // Don't let activity logging failure stop the process
+          console.error("Error logging student creation activity:", logError);
+        }
+
+        toast.success(`Student ${studentData.Name} has been added successfully!`, {
+          autoClose: 3000,
+          position: "top-right"
         });
-        
-        toast.success(`Student ${studentData.Name} has been added successfully!`);
+        setShowNewStudentModal(false);
+        resetNewStudentForm();
       }
       
       await fetchStudents();
-      setShowNewStudentModal(false);
-      resetNewStudentForm();
     } catch (error) {
-      console.error("Error creating student:", error);
-      toast.error("Failed to create student: " + (error.message || "Unknown error"));
+      console.error("Error creating student:", error?.message || error);
+      toast.error(`Failed to create student: ${error?.message || "An unknown error occurred"}`, {
+        autoClose: 5000
+      });
     } finally {
       setIsLoading(false);
     }
@@ -638,6 +658,7 @@ function Students() {
           <div className="text-sm text-surface-500 animate-pulse ml-2">
             Loading...
           </div>
+          
         )}
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative">
@@ -666,7 +687,7 @@ function Students() {
             className="btn btn-primary shadow-lg hover:shadow-xl"
             onClick={() => setShowNewStudentModal(true)}
             disabled={isLoading}
-          > 
+          >
             <UserPlusIcon className="w-4 h-4 mr-2" />
             New Student
           </button>
@@ -677,7 +698,7 @@ function Students() {
       <div className="grid grid-cols-1 gap-6">
         {filteredStudents.length > 0 ? (
           isLoading ? (
-            Array(3).fill(0).map((_, i) => (
+            Array(5).fill(0).map((_, i) => (
               <div key={i} className="student-card animate-pulse">
                 <div className="p-6">
                   <div className="flex items-center justify-between">
@@ -1353,7 +1374,7 @@ function Students() {
                 }}>
                   Cancel
                 </button>
-                <button type="submit" className="btn btn-primary shadow-md hover:shadow-lg">
+                <button type="submit" className="btn btn-primary shadow-md hover:shadow-lg" disabled={isLoading}>
                   <UserPlusIcon className="w-4 h-4 mr-2" />
                   Add Student
                 </button>
