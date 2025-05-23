@@ -135,7 +135,6 @@ export const createAssessment = async (assessment) => {
       dueDate: formatDateForApi(assessment.dueDate)
     };
     const params = { records: [assessmentData] };
-    };
 
     const response = await apperClient.createRecord("assessment", params);
     return response;
@@ -170,7 +169,6 @@ export const updateAssessment = async (assessment) => {
       dueDate: formatDateForApi(assessment.dueDate)
     };
     const params = { records: [assessmentData] };
-    };
 
     const response = await apperClient.updateRecord("assessment", params);
     return response;
