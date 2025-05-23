@@ -708,7 +708,7 @@ const Assessments = () => {
           <motion.div 
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white dark:bg-surface-800 rounded-lg shadow-lg w-full max-w-2xl mx-4"
+            className="bg-white dark:bg-surface-800 rounded-lg shadow-lg w-full max-w-2xl mx-4 max-h-[90vh] flex flex-col"
           >
             <div className="flex justify-between items-center p-4 border-b border-surface-200 dark:border-surface-700">
               <h2 className="text-xl font-semibold">
@@ -721,135 +721,142 @@ const Assessments = () => {
                 <X size={20} />
               </button>
             </div>
-            <div className="p-4">
+            <div className="p-4 overflow-y-auto">
               <form onSubmit={(e) => {
                 e.preventDefault();
                 saveAssessment(currentAssessment, isCreateModalOpen);
               }}>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-3">
                   <div className="col-span-2">
-                    <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                    <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-0.5">
                       Assessment Title
                     </label>
                     <input
                       type="text"
-                      className="form-input w-full"
+                      className="form-input w-full py-2"
                       value={currentAssessment.title}
                       onChange={(e) => setCurrentAssessment({...currentAssessment, title: e.target.value})}
                       required
                     />
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
-                      Type
-                    </label>
-                    <select
-                      className="form-select w-full"
-                      value={currentAssessment.type}
-                      onChange={(e) => setCurrentAssessment({...currentAssessment, type: e.target.value})}
-                    >
-                      {assessmentTypes.filter(type => type !== 'All Types').map(type => (
-                        <option key={type} value={type}>{type}</option>
-                      ))}
-                    </select>
+                  <div className="grid grid-cols-2 gap-3 col-span-2">
+                    <div>
+                      <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-0.5">
+                        Type
+                      </label>
+                      <select
+                        className="form-input w-full py-2"
+                        value={currentAssessment.type}
+                        onChange={(e) => setCurrentAssessment({...currentAssessment, type: e.target.value})}
+                      >
+                        {assessmentTypes.filter(type => type !== 'All Types').map(type => (
+                          <option key={type} value={type}>{type}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-0.5">
+                        Course
+                      </label>
+                      <select
+                        className="form-input w-full py-2"
+                        value={currentAssessment.course}
+                        onChange={(e) => setCurrentAssessment({...currentAssessment, course: e.target.value})}
+                      >
+                        {courseOptions.filter(course => course !== 'All Courses').map(course => (
+                          <option key={course} value={course}>{course}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
-                      Course
-                    </label>
-                    <select
-                      className="form-select w-full"
-                      value={currentAssessment.course}
-                      onChange={(e) => setCurrentAssessment({...currentAssessment, course: e.target.value})}
-                    >
-                      {courseOptions.filter(course => course !== 'All Courses').map(course => (
-                        <option key={course} value={course}>{course}</option>
-                      ))}
-                    </select>
+                  <div className="grid grid-cols-2 gap-3 col-span-2">
+                    <div>
+                      <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-0.5">
+                        Due Date
+                      </label>
+                      <input
+                        type="date"
+                        className="form-input w-full py-2"
+                        value={format(currentAssessment.dueDate, 'yyyy-MM-dd')}
+                        onChange={(e) => setCurrentAssessment({
+                          ...currentAssessment, 
+                          dueDate: new Date(e.target.value)
+                        })}
+                        required
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-0.5">
+                        Status
+                      </label>
+                      <select
+                        className="form-input w-full py-2"
+                        value={currentAssessment.status}
+                        onChange={(e) => setCurrentAssessment({...currentAssessment, status: e.target.value})}
+                      >
+                        {statusOptions.filter(status => status !== 'All Statuses').map(status => (
+                          <option key={status} value={status}>{status}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
-                      Due Date
-                    </label>
-                    <input
-                      type="date"
-                      className="form-input w-full"
-                      value={format(currentAssessment.dueDate, 'yyyy-MM-dd')}
-                      onChange={(e) => setCurrentAssessment({
-                        ...currentAssessment, 
-                        dueDate: new Date(e.target.value)
-                      })}
-                      required
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
-                      Status
-                    </label>
-                    <select
-                      className="form-select w-full"
-                      value={currentAssessment.status}
-                      onChange={(e) => setCurrentAssessment({...currentAssessment, status: e.target.value})}
-                    >
-                      {statusOptions.filter(status => status !== 'All Statuses').map(status => (
-                        <option key={status} value={status}>{status}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
-                      Total Points
-                    </label>
-                    <input
-                      type="number"
-                      className="form-input w-full"
-                      value={currentAssessment.totalPoints}
-                      onChange={(e) => setCurrentAssessment({...currentAssessment, totalPoints: parseInt(e.target.value, 10)})}
-                      min="0"
-                      required
-                    />
-                  </div>
-                  <div className="col-span-2">
-                    <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
-                      Description
-                    </label>
-                    <textarea
-                      className="form-textarea w-full"
-                      rows="3"
-                      value={currentAssessment.description}
-                      onChange={(e) => setCurrentAssessment({...currentAssessment, description: e.target.value})}
-                    ></textarea>
-                  </div>
-                  {currentAssessment.type === 'Exam' || currentAssessment.type === 'Quiz' ? (
-                    <>
+                  <div className="grid grid-cols-2 gap-3 col-span-2">
+                    <div>
+                      <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-0.5">
+                        Total Points
+                      </label>
+                      <input
+                        type="number"
+                        className="form-input w-full py-2"
+                        value={currentAssessment.totalPoints}
+                        onChange={(e) => setCurrentAssessment({...currentAssessment, totalPoints: parseInt(e.target.value, 10)})}
+                        min="0"
+                        required
+                      />
+                    </div>
+                    
+                    {currentAssessment.type === 'Exam' || currentAssessment.type === 'Quiz' ? (
                       <div>
-                        <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+                        <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-0.5">
                           Number of Questions
                         </label>
                         <input
                           type="number"
-                          className="form-input w-full"
+                          className="form-input w-full py-2"
                           value={currentAssessment.questions || 0}
                           onChange={(e) => setCurrentAssessment({...currentAssessment, questions: parseInt(e.target.value, 10)})}
                           min="0"
                         />
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
-                          Duration (minutes)
-                        </label>
-                        <input
-                          type="number"
-                          className="form-input w-full"
-                          value={currentAssessment.duration || 0}
-                          onChange={(e) => setCurrentAssessment({...currentAssessment, duration: parseInt(e.target.value, 10)})}
-                          min="0"
-                        />
-                      </div>
-                    </>
+                    ) : null}
+                  </div>
+                  {currentAssessment.type === 'Exam' || currentAssessment.type === 'Quiz' ? (
+                    <div className="col-span-2">
+                      <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-0.5">
+                        Duration (minutes)
+                      </label>
+                      <input
+                        type="number"
+                        className="form-input w-full py-2"
+                        value={currentAssessment.duration || 0}
+                        onChange={(e) => setCurrentAssessment({...currentAssessment, duration: parseInt(e.target.value, 10)})}
+                        min="0"
+                      />
+                    </div>
                   ) : null}
+                  <div className="col-span-2">
+                    <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-0.5">
+                      Description
+                    </label>
+                    <textarea
+                      className="form-input w-full"
+                      rows="2"
+                      value={currentAssessment.description}
+                      onChange={(e) => setCurrentAssessment({...currentAssessment, description: e.target.value})}
+                    ></textarea>
+                  </div>
                 </div>
-                <div className="flex justify-end gap-3 pt-4 border-t border-surface-200 dark:border-surface-700">
+                <div className="flex justify-end gap-3 pt-3 border-t border-surface-200 dark:border-surface-700 mt-2">
                   <button 
                     type="button"
                     onClick={() => isCreateModalOpen ? setIsCreateModalOpen(false) : setIsEditModalOpen(false)}
