@@ -73,10 +73,7 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
-}
-
-/* Additional utility classes for course management */
-@layer utilities {
+  
   .line-clamp-2 {
     display: -webkit-box;
     -webkit-line-clamp: 2;

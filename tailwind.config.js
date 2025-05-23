@@ -31,12 +31,11 @@ export default {
           900: '#0f172a'   // Darkest
         },
         success: {
-    success: {
-      DEFAULT: '#10B981',
-      light: '#34D399',
-      dark: '#059669'
+          DEFAULT: '#10B981',
+          light: '#34D399',
+          dark: '#059669'
         }
-  },
+      },
   animation: {
     'fade-in': 'fadeIn 0.5s ease-in-out',
     'slide-up': 'slideUp 0.3s ease-out',
@@ -56,8 +55,8 @@ export default {
       '50%': { transform: 'scale(1.05)' },
       '70%': { transform: 'scale(0.9)' },
       '100%': { transform: 'scale(1)', opacity: '1' }
-        }
-      },
+    }
+  },
       fontFamily: {
         sans: ['Inter', 'ui-sans-serif', 'system-ui'],
         heading: ['Inter', 'ui-sans-serif', 'system-ui']
