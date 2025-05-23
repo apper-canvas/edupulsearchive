@@ -120,7 +120,7 @@ const mockStudents = [
 
 function Students() {
   const [students, setStudents] = useState([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [programFilter, setProgramFilter] = useState('');
   const [expandedStudentId, setExpandedStudentId] = useState(null);
@@ -128,7 +128,7 @@ function Students() {
 
   // Fetch students on component mount
   useEffect(() => {
-    fetchStudents();
+    fetchStudents(); 
   }, []);
 
   // Fetch students from database
@@ -137,17 +137,31 @@ function Students() {
     try {
       const studentsData = await getStudents();
       
-      // For now, merge mock academic data with real student data
-      // In a real app, we would fetch this data from the database
-      const enhancedStudents = studentsData.map(student => ({
-        ...student,
-        ...mockStudents.find(mock => mock.studentId === student.studentId) || {}
-      }));
+      if (studentsData && studentsData.length > 0) {
+        // For now, merge mock academic data with real student data
+        // In a real app, we would fetch this data from the database
+        const enhancedStudents = studentsData.map(student => {
+          const mockData = mockStudents.find(mock => mock.studentId === student.studentId);
+          return {
+            ...student,
+            id: student.Id,
+            academicHistory: mockData?.academicHistory || [],
+            attendance: student.attendance || mockData?.attendance || 90,
+            enrollments: mockData?.enrollments || [],
+            enrollmentHistory: mockData?.enrollmentHistory || [],
+            schedule: mockData?.schedule || {}
+          };
+        });
       
-      setStudents(enhancedStudents.length ? enhancedStudents : mockStudents);
+        setStudents(enhancedStudents);
+      } else {
+        // Fall back to mock data if no data is returned
+        setStudents(mockStudents);
+      }
     } catch (error) {
       console.error("Error fetching students:", error);
       toast.error("Failed to load students");
+      setStudents(mockStudents); // Fallback to mock data on error
     } finally {
       setIsLoading(false);
     }
@@ -555,32 +569,13 @@ function Students() {
     }
     
     const studentData = {
-      id: Math.max(...students.map(s => s.id)) + 1,
-      name: newStudentForm.name.trim(),
+      Name: newStudentForm.name.trim(),
       studentId: generateStudentId(),
       email: newStudentForm.email.trim(),
       program: newStudentForm.program.trim(),
       yearLevel: parseInt(newStudentForm.yearLevel),
       status: newStudentForm.status,
       photo: newStudentForm.photo.trim() || `https://randomuser.me/api/portraits/${Math.random() > 0.5 ? 'men' : 'women'}/${Math.floor(Math.random() * 99)}.jpg`,
-      gpa: 0.0,
-      credits: 0,
-      academicHistory: [],
-      attendance: 100,
-      enrollments: [],
-      enrollmentHistory: [],
-      schedule: {}
-    };
-
-    // Format data for API
-    const apiStudentData = {
-      Name: studentData.name,
-      studentId: studentData.studentId,
-      email: studentData.email,
-      program: studentData.program,
-      yearLevel: studentData.yearLevel,
-      status: studentData.status,
-      photo: studentData.photo,
       gpa: 0,
       credits: 0,
       attendance: 100
@@ -588,27 +583,31 @@ function Students() {
     
     try {
       setIsLoading(true);
-      await createStudent(apiStudentData);
+      const newStudent = await createStudent(studentData);
+      
+      if (newStudent) {
+        // Log activity for student creation
+        await logActivity({
+          type: "student",
+          action: "Student Created",
+          details: `New student ${studentData.Name} added to the system`,
+          icon: "user-plus",
+          user: "Admin User",
+          timestamp: new Date().toISOString()
+        });
+        
+        toast.success(`Student ${studentData.Name} has been added successfully!`);
+      }
+      
       await fetchStudents();
       setShowNewStudentModal(false);
       resetNewStudentForm();
-      
-      // Log activity
-      await logActivity({
-        type: "student",
-        action: "Student Created",
-        details: `New student ${apiStudentData.name} added to the system`,
-        icon: "user-plus",
-        user: "Admin User",
-        timestamp: new Date().toISOString()
-      });
     } catch (error) {
       console.error("Error creating student:", error);
       toast.error("Failed to create student: " + (error.message || "Unknown error"));
     } finally {
       setIsLoading(false);
     }
-    toast.success(`Student ${newStudent.name} has been added successfully!`);
   };
 
   const resetNewStudentForm = () => {
@@ -678,11 +677,25 @@ function Students() {
       <div className="grid grid-cols-1 gap-6">
         {filteredStudents.length > 0 ? (
           isLoading ? (
-            <div className="card p-6 text-center">
-              <div className="text-surface-500 dark:text-surface-400 text-lg font-medium">
-                Loading students...
+            Array(3).fill(0).map((_, i) => (
+              <div key={i} className="student-card animate-pulse">
+                <div className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-6">
+                      <div className="w-16 h-16 rounded-full bg-surface-300 dark:bg-surface-600"></div>
+                      <div className="space-y-3">
+                        <div className="h-5 w-48 bg-surface-300 dark:bg-surface-600 rounded"></div>
+                        <div className="h-4 w-72 bg-surface-200 dark:bg-surface-700 rounded"></div>
+                      </div>
+                    </div>
+                    <div className="space-x-2 flex">
+                      <div className="h-8 w-24 bg-surface-200 dark:bg-surface-700 rounded-lg"></div>
+                      <div className="h-8 w-24 bg-surface-200 dark:bg-surface-700 rounded-lg"></div>
+                    </div>
+                  </div>
+                </div>
               </div>
-            </div>
+            ))
           ) : filteredStudents.map(student => (
             <div key={student.id} className="student-card">
               <div 
