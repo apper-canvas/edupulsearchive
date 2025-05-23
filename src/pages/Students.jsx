@@ -550,6 +550,22 @@ function Students() {
 
   const resetNewStudentForm = () => {
     setNewStudentForm({
+      name: '',
+      email: '',
+      program: '',
+      yearLevel: 1,
+      status: 'Active',
+      photo: ''
+    });
+  };
+
+  const updateNewStudentForm = (field, value) => {
+    setNewStudentForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
@@ -559,12 +575,6 @@ function Students() {
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative">
 
-  const updateNewStudentForm = (field, value) => {
-    setNewStudentForm(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
             <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-surface-400" />
             <input
               type="text"
@@ -1022,7 +1032,6 @@ function Students() {
                             )}
                           </div>
                         </div>
-                      )}
                       )}
                     </div>
                   </motion.div>
