@@ -2,6 +2,8 @@ import { useState, useEffect, Fragment } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { getIcon } from '../utils/iconUtils';
+import { getStudents, createStudent } from '../services/studentService';
+import { logActivity } from '../services/activityLogService';
 
 // Mock student data with academic history and transcripts
 const mockStudents = [
@@ -117,11 +119,40 @@ const mockStudents = [
 ];
 
 function Students() {
-  const [students, setStudents] = useState(mockStudents);
+  const [students, setStudents] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [programFilter, setProgramFilter] = useState('');
   const [expandedStudentId, setExpandedStudentId] = useState(null);
   const [activeTab, setActiveTab] = useState('academic');
+
+  // Fetch students on component mount
+  useEffect(() => {
+    fetchStudents();
+  }, []);
+
+  // Fetch students from database
+  const fetchStudents = async () => {
+    setIsLoading(true);
+    try {
+      const studentsData = await getStudents();
+      
+      // For now, merge mock academic data with real student data
+      // In a real app, we would fetch this data from the database
+      const enhancedStudents = studentsData.map(student => ({
+        ...student,
+        ...mockStudents.find(mock => mock.studentId === student.studentId) || {}
+      }));
+      
+      setStudents(enhancedStudents.length ? enhancedStudents : mockStudents);
+    } catch (error) {
+      console.error("Error fetching students:", error);
+      toast.error("Failed to load students");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const [showTranscript, setShowTranscript] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [showNewStudentModal, setShowNewStudentModal] = useState(false);
@@ -136,7 +167,7 @@ function Students() {
 
   // Generate unique student ID
   const generateStudentId = () => {
-    const maxId = Math.max(...students.map(s => parseInt(s.studentId.replace('ST', ''))));
+    const maxId = students.length ? Math.max(...students.map(s => parseInt(s.studentId?.replace('ST', '') || '0'))) : 0;
     return `ST${String(maxId + 1).padStart(8, '0')}`;
   };
 
@@ -493,7 +524,7 @@ function Students() {
   };
 
   // Handle new student form submission
-  const handleNewStudentSubmit = (e) => {
+  const handleNewStudentSubmit = async (e) => {
     e.preventDefault();
     
     // Validation
@@ -523,8 +554,7 @@ function Students() {
       return;
     }
     
-    // Create new student
-    const newStudent = {
+    const studentData = {
       id: Math.max(...students.map(s => s.id)) + 1,
       name: newStudentForm.name.trim(),
       studentId: generateStudentId(),
@@ -541,10 +571,43 @@ function Students() {
       enrollmentHistory: [],
       schedule: {}
     };
+
+    // Format data for API
+    const apiStudentData = {
+      Name: studentData.name,
+      studentId: studentData.studentId,
+      email: studentData.email,
+      program: studentData.program,
+      yearLevel: studentData.yearLevel,
+      status: studentData.status,
+      photo: studentData.photo,
+      gpa: 0,
+      credits: 0,
+      attendance: 100
+    };
     
-    setStudents([...students, newStudent]);
-    setShowNewStudentModal(false);
-    resetNewStudentForm();
+    try {
+      setIsLoading(true);
+      await createStudent(apiStudentData);
+      await fetchStudents();
+      setShowNewStudentModal(false);
+      resetNewStudentForm();
+      
+      // Log activity
+      await logActivity({
+        type: "student",
+        action: "Student Created",
+        details: `New student ${apiStudentData.name} added to the system`,
+        icon: "user-plus",
+        user: "Admin User",
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error creating student:", error);
+      toast.error("Failed to create student: " + (error.message || "Unknown error"));
+    } finally {
+      setIsLoading(false);
+    }
     toast.success(`Student ${newStudent.name} has been added successfully!`);
   };
 
@@ -572,8 +635,14 @@ function Students() {
         <h1 className="text-3xl font-bold text-surface-900 dark:text-white mb-4 md:mb-0 bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
           Student Management
         </h1>
+        {isLoading && (
+          <div className="text-sm text-surface-500 animate-pulse ml-2">
+            Loading...
+          </div>
+        )}
         <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative">
+
 
             <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 text-surface-400" />
             <input
@@ -584,7 +653,7 @@ function Students() {
               className="form-input pl-10 pr-4"
             />
           </div>
-          <select 
+          <select
             value={programFilter}
             onChange={(e) => setProgramFilter(e.target.value)}
             className="form-input"
@@ -597,7 +666,8 @@ function Students() {
           <button 
             className="btn btn-primary shadow-lg hover:shadow-xl"
             onClick={() => setShowNewStudentModal(true)}
-          >
+            disabled={isLoading}
+          > 
             <UserPlusIcon className="w-4 h-4 mr-2" />
             New Student
           </button>
@@ -607,7 +677,13 @@ function Students() {
       {/* Student List */}
       <div className="grid grid-cols-1 gap-6">
         {filteredStudents.length > 0 ? (
-          filteredStudents.map(student => (
+          isLoading ? (
+            <div className="card p-6 text-center">
+              <div className="text-surface-500 dark:text-surface-400 text-lg font-medium">
+                Loading students...
+              </div>
+            </div>
+          ) : filteredStudents.map(student => (
             <div key={student.id} className="student-card">
               <div 
                 className="p-6 cursor-pointer"

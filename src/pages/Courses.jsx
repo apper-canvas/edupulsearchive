@@ -1,15 +1,18 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { toast } from 'react-toastify';
 import { getIcon } from '../utils/iconUtils';
 import MainFeature from '../components/MainFeature';
+import { getCourses } from '../services/courseService';
 
 const Courses = () => {
   const [stats, setStats] = useState({
-    totalCourses: 34,
-    activeCourses: 28,
-    departments: 8,
-    averageEnrollment: 25
+    totalCourses: 0,
+    activeCourses: 0,
+    departments: 0,
+    averageEnrollment: 0
+  });
+  const [isLoading, setIsLoading] = useState(false);
   });
 
   // Icons
@@ -18,16 +21,48 @@ const Courses = () => {
   const BuildingIcon = getIcon('building');
   const UsersIcon = getIcon('users');
 
-  const refreshCourseStats = () => {
-    // Simulate fetching updated course data
-    const newStats = {
-      totalCourses: Math.floor(Math.random() * 20) + 25,
-      activeCourses: Math.floor(Math.random() * 15) + 20,
-      departments: Math.floor(Math.random() * 5) + 5,
-      averageEnrollment: Math.floor(Math.random() * 15) + 15
-    };
-    
-    setStats(newStats);
+  // Fetch course statistics on component mount
+  useEffect(() => {
+    fetchCourseStats();
+  }, []);
+
+  // Fetch course statistics from database
+  const fetchCourseStats = async () => {
+    setIsLoading(true);
+    try {
+      const coursesData = await getCourses();
+      
+      // Calculate statistics
+      const activeCourses = coursesData.filter(course => course.status === 'active');
+      const departmentsSet = new Set(coursesData.filter(course => course.department).map(course => course.department));
+      const totalEnrollment = coursesData.reduce((sum, course) => sum + (course.enrolled || 0), 0);
+      const averageEnrollment = coursesData.length ? Math.round(totalEnrollment / coursesData.length) : 0;
+      
+      // Update stats
+      setStats({
+        totalCourses: coursesData.length,
+        activeCourses: activeCourses.length,
+        departments: departmentsSet.size,
+        averageEnrollment: averageEnrollment
+      });
+      
+      toast.success("Course statistics refreshed!");
+    } catch (error) {
+      console.error("Error fetching course statistics:", error);
+      toast.error("Failed to refresh course statistics");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Refresh course statistics
+  const refreshCourseStats = async () => {
+    try {
+      await fetchCourseStats();
+    } catch (error) {
+      console.error("Error refreshing course statistics:", error);
+      toast.error("Failed to refresh course statistics");
+    }
     toast.success("Course statistics refreshed!");
   };
 
@@ -37,15 +72,18 @@ const Courses = () => {
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-surface-900 dark:text-white">Course Management</h1>
           <p className="text-surface-600 dark:text-surface-400 mt-1">
-            View and manage all courses, enrollments, and academic offerings.
+            View and manage all courses, enrollments, and academic offerings. 
+            {isLoading && <span className="ml-2 text-sm italic">Loading statistics...</span>}
           </p>
         </div>
         
         <div className="mt-4 md:mt-0">
           <button 
             onClick={refreshCourseStats}
-            className="btn btn-primary"
+            className={`btn btn-primary ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
+            disabled={isLoading}
           >
+            {isLoading ? <span className="animate-spin mr-2">⟳</span> : null}
             Refresh Stats
           </button>
         </div>

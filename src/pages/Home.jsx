@@ -3,44 +3,60 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { motion } from 'framer-motion';
 import Chart from 'react-apexcharts';
+import { useSelector } from 'react-redux';
 import { getIcon } from '../utils/iconUtils';
 import MainFeature from '../components/MainFeature';
 import StatsCard from '../components/dashboard/StatsCard';
 import ActivityItem from '../components/dashboard/ActivityItem';
 import PerformanceChart from '../components/dashboard/PerformanceChart';
 import DeadlineItem from '../components/dashboard/DeadlineItem';
+import { getCourses } from '../services/courseService';
+import { getStudents } from '../services/studentService';
+import { getRecentActivity, logActivity } from '../services/activityLogService';
+import { getUpcomingDeadlines } from '../services/deadlineService';
 
 const Home = () => {
   const navigate = useNavigate();
+  const { user } = useSelector(state => state.user);
   const [stats, setStats] = useState({
-    totalStudents: 245,
-    totalCourses: 34,
-    activeEnrollments: 683,
-    averageGrade: 3.6,
-    attendanceRate: 92,
-    completionRate: 88
+    totalStudents: 0,
+    totalCourses: 0,
+    activeEnrollments: 0,
+    averageGrade: 0,
+    attendanceRate: 0,
+    completionRate: 0
   });
   
   const [activeTab, setActiveTab] = useState('overview');
   const [filterActivity, setFilterActivity] = useState('all');
   const [timeRange, setTimeRange] = useState('week');
   const [isLoading, setIsLoading] = useState(false);
+  const [recentActivity, setRecentActivity] = useState([]);
+  const [upcomingDeadlines, setUpcomingDeadlines] = useState([]);
   
-  const [recentActivity, setRecentActivity] = useState([
-    { id: 1, type: "course", action: "Course Created", details: "Introduction to Computer Science", timestamp: "2 hours ago", icon: "book-plus", user: "Dr. Alan Turing" },
-    { id: 2, type: "student", action: "Student Enrolled", details: "Emma Thompson in Advanced Mathematics", timestamp: "3 hours ago", icon: "user-plus", user: "Admin System" },
-    { id: 3, type: "assessment", action: "Grade Updated", details: "Physics Final Exam - 18 students graded", timestamp: "4 hours ago", icon: "clipboard-check", user: "Dr. Marie Curie" },
-    { id: 4, type: "attendance", action: "Attendance Recorded", details: "Biology 101 - 28 students present", timestamp: "5 hours ago", icon: "check-circle", user: "Prof. Jane Goodall" },
-    { id: 5, type: "course", action: "Course Updated", details: "Curriculum changes to Organic Chemistry", timestamp: "Yesterday", icon: "file-edit", user: "Dr. Rosalind Franklin" },
-    { id: 6, type: "student", action: "Student Removed", details: "Thomas Wilson from Calculus II", timestamp: "Yesterday", icon: "user-minus", user: "Admin System" }
-  ]);
+  // Fetch data on component mount
+  useEffect(() => {
+    fetchDashboardData();
+    
+    // Log activity for dashboard visit
+    logDashboardVisit();
+  }, []);
   
-  const [upcomingDeadlines, setUpcomingDeadlines] = useState([
-    { id: 1, title: "Mid-term Exam Submission", course: "Computer Science 101", dueDate: "Tomorrow", priority: "high", status: "pending" },
-    { id: 2, title: "Course Registration Opens", course: "Fall Semester 2023", dueDate: "3 days", priority: "medium", status: "upcoming" },
-    { id: 3, title: "Final Project Deadline", course: "Data Structures", dueDate: "1 week", priority: "high", status: "pending" },
-    { id: 4, title: "Faculty Meeting", course: "Department Wide", dueDate: "2 days", priority: "low", status: "upcoming" }
-  ]);
+  // Log dashboard visit
+  const logDashboardVisit = async () => {
+    try {
+      await logActivity({
+        type: "system",
+        action: "Dashboard Accessed",
+        details: "User accessed the dashboard",
+        icon: "layout-dashboard",
+        user: user?.name || user?.email || "Unknown User",
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error("Error logging dashboard visit:", error);
+    }
+  };
 
   // Icons
   const CalendarIcon = getIcon('calendar');
@@ -209,11 +225,66 @@ const Home = () => {
     ? recentActivity 
     : recentActivity.filter(activity => activity.type === filterActivity);
   
-  const fetchRandomData = () => {
+  // Fetch data from database
+  const fetchDashboardData = async () => {
     setIsLoading(true);
+    try {
+      // Fetch courses and students
+      const [coursesData, studentsData, activitiesData, deadlinesData] = await Promise.all([
+        getCourses(),
+        getStudents(),
+        getRecentActivity(),
+        getUpcomingDeadlines()
+      ]);
+      
+      // Calculate stats
+      const activeCourses = coursesData.filter(course => course.status === 'active');
+      const totalEnrollments = coursesData.reduce((sum, course) => sum + (course.enrolled || 0), 0);
+      
+      // Update stats
+      setStats({
+        totalStudents: studentsData.length,
+        totalCourses: coursesData.length,
+        activeEnrollments: totalEnrollments,
+        averageGrade: calculateAverageGPA(studentsData),
+        attendanceRate: calculateAverageAttendance(studentsData),
+        completionRate: 88 // Default value as we don't have this data yet
+      });
+      
+      // Update activities and deadlines
+      setRecentActivity(formatActivities(activitiesData));
+      setUpcomingDeadlines(formatDeadlines(deadlinesData));
+      
+      toast.success("Dashboard data loaded successfully!");
+    } catch (error) {
+      console.error("Error fetching dashboard data:", error);
+      toast.error("Failed to load dashboard data");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Calculate average GPA from students data
+  const calculateAverageGPA = (students) => {
+    if (!students.length) return 0;
+    const totalGPA = students.reduce((sum, student) => sum + (parseFloat(student.gpa) || 0), 0);
+    return parseFloat((totalGPA / students.length).toFixed(1));
+  };
+  
+  // Calculate average attendance from students data
+  const calculateAverageAttendance = (students) => {
+    if (!students.length) return 0;
+    const totalAttendance = students.reduce((sum, student) => sum + (parseInt(student.attendance) || 0), 0);
+    return Math.round(totalAttendance / students.length);
+  };
+  
+  // Refresh dashboard data
+  const refreshDashboardData = () => {
+    fetchDashboardData();
+  };
     
-    // Simulate fetching updated data
-    setTimeout(() => {
+  // Generate random data for demonstration
+  const generateRandomData = () => {
       const newStats = {
         totalStudents: Math.floor(Math.random() * 100) + 200,
         totalCourses: Math.floor(Math.random() * 20) + 20,
@@ -262,8 +333,53 @@ const Home = () => {
       
       setStats(newStats);
       setIsLoading(false);
-      toast.success("Dashboard data refreshed successfully!");
-    }, 800);
+  };
+  
+  // Format activities for display
+  const formatActivities = (activities) => {
+    return activities.map(activity => ({
+      id: activity.Id,
+      type: activity.type,
+      action: activity.action,
+      details: activity.details,
+      timestamp: formatTimestamp(activity.timestamp),
+      icon: activity.icon,
+      user: activity.user
+    }));
+  };
+  
+  // Format deadlines for display
+  const formatDeadlines = (deadlines) => {
+    return deadlines.map(deadline => ({
+      id: deadline.Id,
+      title: deadline.title,
+      course: deadline.course,
+      dueDate: deadline.dueDate,
+      priority: deadline.priority,
+      status: deadline.status
+    }));
+  };
+  
+  // Format timestamp for display
+  const formatTimestamp = (timestamp) => {
+    if (!timestamp) return 'Unknown time';
+    
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.round(diffMs / 60000);
+    const diffHours = Math.round(diffMs / 3600000);
+    const diffDays = Math.round(diffMs / 86400000);
+    
+    if (diffMins < 60) {
+      return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
+    } else if (diffHours < 24) {
+      return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
+    } else if (diffDays < 7) {
+      return `${diffDays} day${diffDays !== 1 ? 's' : ''} ago`;
+    } else {
+      return date.toLocaleDateString();
+    }
   };
   
   const handleTimeRangeChange = (range) => {
@@ -295,7 +411,7 @@ const Home = () => {
       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-surface-900 dark:text-white">Dashboard</h1>
-          <p className="text-surface-600 dark:text-surface-400 mt-1">
+          <p className="text-surface-600 dark:text-surface-400 mt-1"> 
             Welcome to EduPulse. Here's your academic overview.
           </p>
         </div>
@@ -323,7 +439,7 @@ const Home = () => {
           </div>
           
           <button 
-            onClick={fetchRandomData}
+            onClick={refreshDashboardData}
             className={`btn btn-primary ${isLoading ? 'opacity-70 cursor-not-allowed' : ''}`}
             disabled={isLoading}
           >

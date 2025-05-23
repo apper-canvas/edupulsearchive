@@ -1,17 +1,14 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getCourses, createCourse, deleteCourse } from '../services/courseService';
 import { getIcon } from '../utils/iconUtils';
 
 const MainFeature = () => {
   // State for managing courses
-  const [courses, setCourses] = useState([
-    { id: 1, code: "CS101", name: "Introduction to Computer Science", instructor: "Dr. Alan Turing", department: "Computer Science", credits: 3, status: "active", enrolled: 32, capacity: 40 },
-    { id: 2, code: "MATH201", name: "Calculus II", instructor: "Dr. Katherine Johnson", department: "Mathematics", credits: 4, status: "active", enrolled: 25, capacity: 30 },
-    { id: 3, code: "BIO150", name: "Fundamentals of Biology", instructor: "Dr. Rosalind Franklin", department: "Biology", credits: 3, status: "active", enrolled: 38, capacity: 45 },
-    { id: 4, code: "PHYS210", name: "Mechanics & Waves", instructor: "Dr. Richard Feynman", department: "Physics", credits: 4, status: "active", enrolled: 22, capacity: 30 },
-    { id: 5, code: "ENG102", name: "Academic Writing", instructor: "Prof. Maya Angelou", department: "English", credits: 3, status: "active", enrolled: 28, capacity: 35 },
-  ]);
+  const [courses, setCourses] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
   
   // State for new course form
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -31,9 +28,30 @@ const MainFeature = () => {
   const [departmentFilter, setDepartmentFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
   
-  // Get unique departments for filter dropdown
-  const departments = ["all", ...new Set(courses.map(course => course.department))];
+  // Fetch courses on component mount
+  useEffect(() => {
+    fetchCourses();
+  }, []);
   
+  // Fetch courses from database
+  const fetchCourses = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const coursesData = await getCourses();
+      setCourses(coursesData);
+    } catch (err) {
+      console.error("Error fetching courses:", err);
+      setError("Failed to load courses. Please try again.");
+      toast.error("Failed to load courses");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Get unique departments for filter dropdown
+  const departments = ["all", ...new Set(courses.filter(c => c.department).map(course => course.department))];
+    
   // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -44,47 +62,68 @@ const MainFeature = () => {
   };
   
   // Add new course
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     
     // Validate form
     if (!newCourse.code || !newCourse.name || !newCourse.instructor || !newCourse.department) {
-      toast.error("Please fill out all required fields");
+      toast.error("Please fill out all required fields.");
       return;
     }
     
-    const newId = courses.length > 0 ? Math.max(...courses.map(c => c.id)) + 1 : 1;
-    
-    setCourses(prev => [
-      ...prev,
-      { ...newCourse, id: newId }
-    ]);
-    
-    // Reset form
-    setNewCourse({
-      code: "",
-      name: "",
-      instructor: "",
-      department: "",
-      credits: 3,
-      status: "active",
-      enrolled: 0,
-      capacity: 30
-    });
-    
-    setIsFormOpen(false);
-    toast.success("Course added successfully!");
+    try {
+      setIsLoading(true);
+      // Format the data for API - convert course name to Name field
+      const courseData = {
+        Name: newCourse.name,
+        ...newCourse
+      };
+      
+      await createCourse(courseData);
+      
+      // Reset form
+      setNewCourse({
+        code: "",
+        name: "",
+        instructor: "",
+        department: "",
+        credits: 3,
+        status: "active",
+        enrolled: 0,
+        capacity: 30
+      });
+      
+      await fetchCourses(); // Refresh courses
+      setIsFormOpen(false);
+      toast.success("Course added successfully!");
+    } catch (error) {
+      toast.error("Failed to add course: " + (error.message || "Unknown error"));
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   // Delete course
-  const handleDelete = (id) => {
-    setCourses(prev => prev.filter(course => course.id !== id));
-    toast.success("Course removed successfully!");
+  const handleDelete = async (id) => {
+    if (!confirm("Are you sure you want to delete this course?")) {
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      await deleteCourse(id);
+      await fetchCourses(); // Refresh courses
+      toast.success("Course removed successfully!");
+    } catch (error) {
+      toast.error("Failed to delete course: " + (error.message || "Unknown error"));
+    } finally {
+      setIsLoading(false);
+    }
   };
   
   // Filter courses based on search and filters
   const filteredCourses = courses.filter(course => {
-    const matchesSearch = course.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    const matchesDepartment = departmentFilter === "all" || course.department?.toLowerCase() === departmentFilter?.toLowerCase();
                          course.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          course.instructor.toLowerCase().includes(searchTerm.toLowerCase());
     
@@ -113,13 +152,17 @@ const MainFeature = () => {
         <h2 className="text-lg font-semibold text-surface-900 dark:text-white flex items-center gap-2">
           <BookOpenIcon className="h-5 w-5 text-primary" />
           <span>Course Management</span>
+          {isLoading && <span className="ml-2 text-sm text-surface-500 animate-pulse">Loading...</span>}
         </h2>
         
         <button 
           onClick={() => setIsFormOpen(true)}
-          className="btn btn-primary inline-flex items-center gap-2"
+          className={`btn btn-primary inline-flex items-center gap-2 ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+          disabled={isLoading}
         >
-          <PlusIcon className="h-4 w-4" />
+          {isLoading ? (
+            <span className="animate-spin mr-2">⟳</span>
+          ) : <PlusIcon className="h-4 w-4" />}
           <span>Add Course</span>
         </button>
       </div>
@@ -165,6 +208,13 @@ const MainFeature = () => {
           </div>
         </div>
       </div>
+
+      {/* Error Message */}
+      {error && (
+        <div className="p-4 mb-4 text-red-700 bg-red-100 dark:bg-red-900/30 dark:text-red-400 rounded-md">
+          {error}
+        </div>
+      )}
       
       {/* Courses Table */}
       <div className="overflow-x-auto">
@@ -194,7 +244,7 @@ const MainFeature = () => {
                   <td className="py-3 px-4 text-sm font-medium text-surface-900 dark:text-white">{course.code}</td>
                   <td className="py-3 px-4 text-sm text-surface-700 dark:text-surface-300">{course.name}</td>
                   <td className="py-3 px-4 text-sm text-surface-600 dark:text-surface-400 hidden md:table-cell">{course.instructor}</td>
-                  <td className="py-3 px-4 text-sm text-surface-600 dark:text-surface-400 hidden lg:table-cell">{course.department}</td>
+                  <td className="py-3 px-4 text-sm text-surface-600 dark:text-surface-400 hidden lg:table-cell">{course.department || 'N/A'}</td>
                   <td className="py-3 px-4 text-sm text-center text-surface-600 dark:text-surface-400 hidden md:table-cell">{course.credits}</td>
                   <td className="py-3 px-4 text-sm text-center">
                     <span className="inline-flex items-center gap-1">
@@ -228,11 +278,12 @@ const MainFeature = () => {
                   </td>
                   <td className="py-3 px-4 text-sm text-center">
                     <button
-                      onClick={() => handleDelete(course.id)}
-                      className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors"
+                      onClick={() => handleDelete(course.Id)}
+                      className={`text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 transition-colors ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                       aria-label="Delete course"
+                      disabled={isLoading}
                     >
-                      <TrashIcon className="h-4 w-4" />
+                      {isLoading ? <span className="animate-spin">⟳</span> : <TrashIcon className="h-4 w-4" />}
                     </button>
                   </td>
                 </motion.tr>
@@ -240,7 +291,7 @@ const MainFeature = () => {
             ) : (
               <tr>
                 <td colSpan="8" className="py-6 text-center text-surface-500 dark:text-surface-400">
-                  No courses found matching your filters.
+                  {isLoading ? "Loading courses..." : "No courses found matching your filters."}
                 </td>
               </tr>
             )}
@@ -411,11 +462,12 @@ const MainFeature = () => {
                   >
                     Cancel
                   </button>
-                  <button
+                    onClick={() => setIsFormOpen(false)} 
                     type="submit"
+                    disabled={isLoading}
                     className="btn btn-primary"
                   >
-                    Add Course
+                  </button> 
                   </button>
                 </div>
               </form>
